@@ -1,0 +1,212 @@
+{
+	"motd": [
+		"Welcome to STEVE",
+		"Watch your step..."
+	],
+	"rooms" : {
+		"start" : {
+			"desc" : "You are standing in a field. There is a goat path to the north.",
+			"actions" : {
+				"north" : { "action" : "move", "room" : "goatPath" }
+			}
+		},
+		"goatPath" : {
+			"desc" : "You find yourself on a goat path. There is an easy, slow path to the east, and a dangerous path heading down a cliff side to the west.",
+			"actions" : {
+				"east" : { "action" : "move", "room" : "coast1" },
+				"west" : {
+					"choice" : [
+						{
+							"conditions" : [
+								{
+									"type" : "state",
+									"op" : "set",
+									"var" : "have_billy"
+								}
+							],
+							"actions" : [
+								{
+									"action" : "message",
+									"message" : "You and Billy carefully make your down the steep cliff path."
+								},
+								{ "action" : "move", "room" : "coast1" }
+							]
+						},
+						{
+							"action" : "die",
+							"message" : "You attempt to make your way down the path, slipping and falling to your death. A goat you are not."
+						}
+					]
+				},
+				"ride" : {
+					"conditions" : [
+						{
+							"type" : "extra",
+							"extra" : [
+								["goat", "down", "cliff"]
+							]
+						}
+					],
+					"choice" : [
+						{
+							"conditions" : [
+								{
+									"type" : "state",
+									"op" : "unset",
+									"var" : "have_billy"
+								}
+							],
+							"actions" : [
+								{
+									"action" : "message",
+									"message" : "You find the nearest goat and carefully make your way down the cliff. You find out the goat's name is Billy. Billy has now joined your party."
+								},
+								{
+									"action" : "state_set",
+									"var" : "have_billy"
+								},
+								{ "action" : "move", "room" : "coast1" }
+							]
+						},
+						{
+							"conditions" : [
+								{
+									"type" : "state",
+									"op" : "set",
+									"var" : "have_billy"
+								}
+							],
+							"actions" : [
+								{
+									"action" : "message",
+									"message" : "Why would you need another goat?"
+								}
+							]
+						}
+					]
+				}
+			}
+		},
+		"coast1" : {
+			"desc" : "You arrive at the coast line. You can travel east or west along the coast, or north back up the cliff.",
+			"actions" : {
+				"north" : { "action" : "move", "room" : "goatPath" },
+				"west" : { "action" : "move", "room" : "endlessCoast" },
+				"east" : { "action" : "move", "room" : "coast2" }
+			}
+		},
+		"endlessCoast" : {
+			"desc" : "You arrive at more coast line. You can travel east or west along the coast. It is all starting to look the same.",
+			"actions" : {
+				"west" : { "action" : "move", "room" : "endlessCoast" },
+				"east" : { "action" : "move", "room" : "coast1" }
+			}
+		},
+		"coast2" : {
+			"desc" : "You arrive at the coast line. You can travel east or west along the coast. It seems to be getting a little more rocky.",
+			"actions" : {
+				"west" : { "action" : "move", "room" : "coast1" },
+				"east" : { "action" : "move", "room" : "outsideCave" }
+			}
+		},
+		"outsideCave" : {
+			"desc" : "The coast line ends at the mouth of a cave with long jagged outcroppings along the mouth of the cave.",
+			"actions" : {
+				"west" : { "action" : "move", "room" : "coast2" },
+				"enter" : {
+					"conditions" : [
+						{
+							"type" : "extra",
+							"extra" : [
+								["cave"]
+							]
+						}
+					],
+					"choice" : [
+						{
+							"conditions" : [
+								{
+									"type" : "state",
+									"op" : "set",
+									"var" : "sacrifice_billy"
+								}
+							],
+							"actions" : [
+								{
+									"action" : "message",
+									"message" : "You follow Billy into the cave in search of your valued garbage disposal."
+								},
+								{
+									"action" : "message",
+									"message" : "Upon entering the cave, the ground shakes as the teeth of the cave close behind you."
+								},
+								{
+									"action" : "move",
+									"room" : "caveEnterance"
+								}
+							]
+						},
+						{
+							"action" : "message",
+							"message" : "Are you crazy? How do you know it is safe? The cave's 'mouth' looks like it has teeth."
+						}
+					]
+				},
+				"feed" : {
+					"conditions" : [
+						{
+							"type" : "extra",
+							"extra" : [
+								["billy", "to", "cave"],
+								["goat", "to", "cave"]
+							]
+						}
+					],
+					"choice" : [
+						{
+							"conditions" : [
+								{
+									"type" : "state",
+									"op" : "set",
+									"var" : "sacrifice_billy"
+								}
+							],
+							"actions" : [
+								{
+									"action" : "message",
+									"message" : "You have no further goats to sacrifice to appease the cave monster."
+								}
+							]
+						},
+						{
+							"conditions" : [
+								{
+									"type" : "state",
+									"op" : "set",
+									"var" : "have_billy"
+								}
+							],
+							"actions" : [
+								{
+									"action" : "message",
+									"message" : "Billy disappears into the mouth of the cave, and doesn't come out. There goes your garbage disposal."
+								},
+								{
+									"action" : "state_set",
+									"var" : "sacrifice_billy"
+								}
+							]
+						}
+					]
+				}
+			}
+		},
+		"caveEnterance" : {
+			"desc" : "You are at the enterance of the cave. With what little light that is available, you can see a pile of bones to the west, and a slightly flooded section to the west.",
+			"actions" : {
+				"west" : { "action" : "move", "room" : "caveBoneRoom" },
+				"east" : { "action" : "move", "room" : "floodedRoom" }
+			}
+		}
+	}
+}
