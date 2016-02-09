@@ -164,9 +164,9 @@ class JsonWorld(SteveWorld):
 
     def getActions(self, room):
         if not room in self.__world["rooms"]:
-            return ""
+            return {}
         if not "actions" in self.__world["rooms"][room]:
-            return ""
+            return {}
         return self.__world["rooms"][room]["actions"]
 
     def isRoom(self, room):
@@ -221,10 +221,82 @@ class ConsoleInterface(SteveInterface):
             print ""
             pass
 
+class DevToolDotPrinter:
+    def __init__(self, world):
+        self.world = world
+    
+    def getAllDestinations(self, action):
+        if "action" in action:
+            if action["action"] == "move":
+                return [action["room"]]
+        elif "actions" in action:
+            retVal = []
+            for subaction in action["actions"]:
+                retVal += self.getAllDestinations(subaction)
+            return retVal
+        elif "choice" in action:
+            retVal = []
+            for subaction in action["choice"]:
+                retVal += self.getAllDestinations(subaction)
+            return retVal
+                
+        return []
+    
+    def getDotRepresentation(self):
+        visitedRooms = []
+        toVisit = [self.world.getStartRoom()]
+        firstRoom = True
+
+        retVal  = "digraph {\n"
+        while len(toVisit) > 0:
+            room = toVisit.pop()
+            visitedRooms.append(room)
+            if firstRoom:
+                firstRoom = False
+                retVal += "  " + room + " [ shape=\"doublecircle\" ]\n"
+            elif not self.world.isRoom(room):
+                retVal += "  " + room + " [ style=\"filled\", fillcolor=\"red\"]\n"
+                
+            for actionId, action in self.world.getActions(room).iteritems():
+                adjRooms = self.getAllDestinations(action)
+                edges = []
+                for adjRoom in adjRooms:
+                    if adjRoom not in edges:
+                        edges.append(adjRoom)
+                        retVal += "  " + room + " -> " + adjRoom + " [ label=\"" + actionId + "\" ]\n"
+                        if adjRoom not in visitedRooms and adjRoom not in toVisit:
+                            toVisit.append(adjRoom)
+            
+        retVal += "}\n"
+        return retVal
+        
+
 def main(args=sys.argv):
-    engine = SteveEngine(JsonWorld("default.world.json"))
-    interface = ConsoleInterface()
-    interface.run(engine)
+    args = args[1:]
+    
+    worldName = "default"
+    devMode = ""
+    
+    if len(args) > 0:
+        if args[0][0] != '-':
+            worldName = args[0]
+            args = args[1:]
+        if len(args) > 0:
+            if args[0] == '--dev':
+                if len(args) > 1:
+                    devMode = args[1]
+                else:
+                    print "--dev option requires mode argument"
+                    return 1
+    
+    world = JsonWorld(worldName + ".world.json")
+    if devMode == "graphviz":
+        print DevToolDotPrinter(world).getDotRepresentation()
+    elif devMode == "":
+        engine = SteveEngine(world)
+        interface = ConsoleInterface()
+        interface.run(engine)
+    return 0
 
 if __name__ == "__main__":
-    main()
+    sys.exit(main())

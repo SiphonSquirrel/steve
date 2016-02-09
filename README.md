@@ -187,6 +187,6 @@ to aid with your dungeoneering.
 
 Usage (requires the graphviz package):
 
-	./steve.py [worldname] ---dey graphviz dot -Tpng > out.png
+	./steve.py [worldname] --dev graphviz | dot -Tpng > out.png
 
 Draws the dungeon as a directed graph.
