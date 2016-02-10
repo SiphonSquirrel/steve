@@ -611,7 +611,7 @@ def main(args=sys.argv):
             if args[0] == '--dev':
                 if len(args) > 1:
                     devMode = args[1]
-                    devMode = devMode[2:]
+                    args = args[2:]
                 else:
                     print "--dev option requires mode argument"
                     return 1
