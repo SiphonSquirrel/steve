@@ -178,11 +178,11 @@ The above only evaluates to true if the state "eaten" has been set.
 
 ### Development Tools
 
-The steve executable provides some (one at the time of this writing) dey tools
-to aid with your dungeoneering.
+The steve executable provides some dev tools to aid with your dungeoneering.
 
   * graphviz — Prints the world as a graphviz diagram
   * stats — Gathers stats about the world, printing various counts
+  * check - Checks the world file for problems
 
 ### Development Tools — Graphviz
 
@@ -194,7 +194,7 @@ Draws the dungeon as a directed graph.
 
 ### Development Tools — Stats
 
-Usage (requires the graphviz package):
+Usage:
 
 	./steve.py [worldname] --dev stats
 
@@ -213,3 +213,22 @@ Example Output:
 	Command ride ................. 1
 	Command west ................. 6
 	Room Count ................... 9
+
+### Development Tools — Check
+
+Usage:
+
+	./steve.py [worldname] --dev check
+
+Output when no errors:
+
+	OK!
+
+Output when problems are detected:
+
+	ERROR outsideCave{enter} - Found unknown condition type: extraa
+	WARN outsideCave{enter} - Unexpected key 'extra' for condition extraa
+
+Errors are formatted as follows:
+
+	ErrorType RoomId{ActionId} - ProblemMessage

@@ -219,7 +219,6 @@ class ConsoleInterface(SteveInterface):
                     playing = input == "y"
         except (EOFError, KeyboardInterrupt):
             print ""
-            pass
 
 class DevToolBaseRoomVisitor:
     def __init__(self, world):
@@ -321,6 +320,152 @@ class DevToolStatistics(DevToolBaseRoomVisitor):
         else:
             self.counts[actionKey] += 1
 
+
+class DevToolWorldChecker(DevToolBaseRoomVisitor):
+    def __init__(self, world):
+        self.world = world
+        
+    def check(self, printErrors=True):
+        self.errors = []
+        self.visitRooms()
+        if printErrors:
+            if len(self.errors) > 0:
+                self.printErrors(self.errors)
+            else:
+                print "OK!"
+        return self.errors
+    
+    def printErrors(self, errors):
+        for err in errors:
+            print err["type"].upper() + " " + err["room"] + "{" + err["actionId"] + "} - " + err["message"]
+
+    def warn(self, room, actionId, action, message):
+        self.errors.append({'type' : 'warn', 'room' : room, 'actionId' : actionId, 'action' : action, 'message' : message})
+
+    def error(self, room, actionId, action, message):
+        self.errors.append({'type' : 'error', 'room' : room, 'actionId' : actionId, 'action' : action, 'message' : message})
+
+    def onRoom(self, room, actions):
+        for actionId, action in actions.iteritems():
+            self.onAction(room, actionId, action)
+        
+    def onAction(self, room, actionId, action):
+        if "action" in action:
+            if "actions" in action:
+                self.warn(room, actionId, action, "Found 'actions' and 'action' in same block")
+            if "choice" in action:
+                self.warn(room, actionId, action, "Found 'choice' and 'action' in same block")
+            self.checkAction(room, actionId, action)
+            
+        elif "actions" in action:
+            if "choice" in action:
+                self.warn(room, actionId, action, "Found 'choice' and 'actions' in same block")
+            if len(action["actions"]) == 0:
+                self.warn(room, actionId, action, "Empty 'actions' block")
+            for key in action.keys():
+                if key not in ["actions", "conditions"]:
+                    self.warn(room, actionId, action, "Unexpected key '" + key + "' for actions block")
+                elif key == "conditions":
+                    conditions = action["conditions"]
+                    if len(conditions) == 0:
+                        self.warn(room, actionId, action, "Empty 'conditions' block in actions block")
+                    for condition in conditions:
+                        self.checkCondition(room, actionId, action, condition)
+            for subaction in action["actions"]:
+                self.onAction(room, actionId, subaction)
+                
+        elif "choice" in action:
+            if len(action["choice"]) == 0:
+                self.warn(room, actionId, action, "Empty 'choice' block")
+            for key in action.keys():
+                if key not in ["choice", "conditions"]:
+                    self.warn(room, actionId, action, "Unexpected key '" + key + "' for choice block")
+                elif key == "conditions":
+                    conditions = action["conditions"]
+                    if len(conditions) == 0:
+                        self.warn(room, actionId, action, "Empty 'conditions' block in choice block")
+                    for condition in conditions:
+                        self.checkCondition(room, actionId, action, condition)
+            for subaction in action["choice"]:
+                self.onAction(room, actionId, subaction)
+        else:
+            
+            self.error(room, actionId, action, "Could not find 'action', 'actions' or 'choice' blocks, found: " + str(action.keys()))
+
+    def checkAction(self, room, actionId, action):
+        actionType = action["action"]
+    
+        if actionType not in ['die', 'win', 'message', 'move', 'state_set', 'state_unset']:
+            self.error(room, actionId, action, "Found unknown action type: " + actionType)
+    
+        validKeys = ['action', 'conditions']
+        requiredKeys = []
+        if actionType in ['die', 'win', 'message']:
+            validKeys += ['message']
+            requiredKeys += ['message']
+
+        if actionType in ['move']:
+            validKeys += ['room']
+            requiredKeys += ['room']
+
+        if actionType in ['state_set', 'state_unset']:
+            validKeys += ['var']
+            requiredKeys += ['var']
+        
+        if actionType in ['state_set']:
+            validKeys += ['val']
+    
+        for key in action.keys():
+            if key not in validKeys:
+                self.warn(room, actionId, action, "Unexpected key '" + key + "' for action " + actionType)
+            if key in requiredKeys:
+                requiredKeys.remove(key)
+        
+        if len(requiredKeys) > 0:
+            self.error(room, actionId, action, "One or more missing required keys for action " + actionType + ": " + str(requiredKeys))
+        
+        if "conditions" in action:
+            conditions = action["conditions"]
+            if len(conditions) == 0:
+                self.warn(room, actionId, action, "Empty 'conditions' block")
+            for condition in conditions:
+                self.checkCondition(room, actionId, action, condition)
+
+    def checkCondition(self, room, actionId, action, condition):
+        if "type" not in condition:
+            self.error(room, actionId, action, "Type not found for condition!")
+            return
+            
+        conditionType = condition["type"]
+        
+        if conditionType not in ["extra", "state"]:
+            self.error(room, actionId, action, "Found unknown condition type: " + conditionType)
+        
+        validKeys = ["type"]
+        requiredKeys = []
+        if conditionType in ["extra"]:
+            validKeys += ["extra"]
+            requiredKeys += ["extra"]
+        
+        if conditionType in ["state"]:
+            validKeys += ["var", "op"]
+            requiredKeys += ["var", "op"]
+            if "op" in condition:
+                if condition["op"] not in ["set", "unset", "=", "eq", "!=", "ne"]:
+                    self.error(room, actionId, action, "Unknown op '" + condition["op"] + "' for condition " + conditionType)
+                elif condition["op"] not in ["set", "unset"]:
+                    validKeys += ["val"]
+                    requiredKeys += ["val"]
+    
+        for key in condition.keys():
+            if key not in validKeys:
+                self.warn(room, actionId, action, "Unexpected key '" + key + "' for condition " + conditionType)
+            if key in requiredKeys:
+                requiredKeys.remove(key)
+        
+        if len(requiredKeys) > 0:
+            self.error(room, actionId, action, "One or more missing required keys for condition type " + conditionType + ": " + str(requiredKeys))
+            
 def main(args=sys.argv):
     args = args[1:]
     
@@ -348,6 +493,8 @@ def main(args=sys.argv):
             value = str(counts[key])
             spacer = '.' * (30 - (len(key) + len(value)))
             print key + " " + spacer + " " + value
+    elif devMode == "check":
+        DevToolWorldChecker(world).check()
     elif devMode == "":
         engine = SteveEngine(world)
         interface = ConsoleInterface()
