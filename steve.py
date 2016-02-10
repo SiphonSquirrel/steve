@@ -1,6 +1,7 @@
 #!/usr/bin/python -u
 
 import sys, json
+import os, os.path
 
 shortCommands = {
     "n" : "north",
@@ -16,8 +17,20 @@ class StevePlayer:
         self.won = False
         self.state = {}
         self.inv = []
+        
+    def save(self, world, slot):
+        pass
+    
+    def load(self, world, slot):
+        pass
 
 class SteveWorld:
+    def getWorldName(self):
+        pass
+    
+    def getMotd(self):
+        return []
+    
     def getStartRoom(self):
         return "start"
     
@@ -150,10 +163,63 @@ class SteveEngine:
         interface.printLines("I don't know how to " + commandLine + ".")
         return False
 
+class JsonPlayer(StevePlayer):
+    def __init__(self, room):
+        StevePlayer.__init__(self, room)
+        
+    def save(self, world, slot):
+        playerData = {
+            "room" : self.room,
+            "dead" : self.dead,
+            "won" : self.won,
+            "state" : self.state,
+            "inv" : self.inv
+        }
+        
+        saveDir = os.path.join(os.path.expanduser("~"), ".steve")
+        if not os.path.isdir(saveDir):
+            os.makedirs(saveDir)
+        
+        saveName = os.path.join(saveDir, world.getWorldName() + ".save." + str(slot) + ".json")
+        with open(saveName, "w") as fp:
+            json.dump(playerData, fp)
+    
+    def load(self, world, slot):
+        saveDir = os.path.join(os.path.expanduser("~"), ".steve")
+        if not os.path.isdir(saveDir):
+            os.makedirs(saveDir)
+            
+        saveName = os.path.join(saveDir, world.getWorldName() + ".save." + str(slot) + ".json")
+        if not os.path.isfile(saveName):
+            return False
+        
+        with open(saveName, "r") as fp:
+            playerData = json.load(fp)
+            
+            self.room = playerData["room"]
+            self.dead = playerData["dead"]
+            self.won = playerData["won"]
+            self.state = playerData["state"]
+            self.inv = playerData["inv"]
+
+        return True
+
 class JsonWorld(SteveWorld):
     def __init__(self, jsonFile):
+        import os.path
         with open(jsonFile, "r") as fp:
             self.__world = json.load(fp)
+        
+        name = os.path.basename(jsonFile)
+        self.worldName = name[:name.find(".world.json")]
+            
+    def getWorldName(self):
+        return self.worldName
+        
+    def getMotd(self):
+        if "motd" in self.__world:
+            return self.__world["motd"]
+        return []
 
     def getDescription(self, room):
         if not room in self.__world["rooms"]:
@@ -183,12 +249,23 @@ class ConsoleInterface(SteveInterface):
         if self.debug:
             print "DEBUG : " + lines
 
+    def showHelp(self):
+        helpText  = "Command Help\n"
+        helpText += "------------\n"
+        helpText += "?,!help      - This help text\n"
+        helpText += "!quit        - Exits the game\n"
+        helpText += "!save [slot] - Saves the game to the specified slot, default: 0\n"
+        helpText += "!load [slot] - Loads the game from the specified slot, default: 0\n"
+        self.printLines(helpText)
+
     def run(self, engine):
         playing = True
         try:
             while playing:
-                player = StevePlayer(engine.world.getStartRoom())
-        
+                self.printLines("\n".join(engine.world.getMotd()))
+                self.printLines("\nUse !help or ? to get command help")
+                
+                player = JsonPlayer(engine.world.getStartRoom())
                 showDescription = True
                 while not (player.won or player.dead):
                     self.printLines("")
@@ -197,10 +274,42 @@ class ConsoleInterface(SteveInterface):
                         if desc != "":
                             self.printLines(desc)
                     input = raw_input('> ').strip()
-                    if input == "quit":
-                        playing = False
-                        break
-                    showDescription = engine.process(self, player, input)
+                    if input.startswith("!"):
+                        showDescription = False
+                        cmdArr = input[1:].split(" ")
+                        if cmdArr[0] == "quit":
+                            playing = False
+                            break
+                        elif cmdArr[0] == "help":
+                            self.showHelp()
+                        elif cmdArr[0] == "save":
+                            slot = 0
+                            if len(cmdArr) > 1:
+                                slot = int(cmdArr[1])
+
+                            if slot >= 0 and slot <= 9:
+                                player.save(engine.world, slot)
+                            else:
+                                self.printLines("Please specify a slot from 0 to 9")
+                        elif cmdArr[0] == "load":
+                            slot = 0
+                            if len(cmdArr) > 1:
+                                slot = int(cmdArr[1])
+                            if slot >= 0 and slot <= 9:
+                                loaded = player.load(engine.world, slot)
+                                if loaded:
+                                    self.printLines("Loaded slot " + str(slot))
+                                    showDescription = True
+                                else:
+                                    self.printLines("Could not load slot " + str(slot))
+                            else:
+                                self.printLines("Please specify a slot from 0 to 9")
+                                
+                    elif input == "?":
+                        showDescription = False
+                        self.showHelp()
+                    else:
+                        showDescription = engine.process(self, player, input)
             
                 if not playing:
                     break
