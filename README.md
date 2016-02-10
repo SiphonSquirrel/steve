@@ -182,6 +182,7 @@ The steve executable provides some (one at the time of this writing) dey tools
 to aid with your dungeoneering.
 
   * graphviz — Prints the world as a graphviz diagram
+  * stats — Gathers stats about the world, printing various counts
 
 ### Development Tools — Graphviz
 
@@ -190,3 +191,25 @@ Usage (requires the graphviz package):
 	./steve.py [worldname] --dev graphviz | dot -Tpng > out.png
 
 Draws the dungeon as a directed graph.
+
+### Development Tools — Stats
+
+Usage (requires the graphviz package):
+
+	./steve.py [worldname] --dev stats
+
+Example Output:
+
+	Action actions ............... 6
+	Action choice ................ 4
+	Action die ................... 1
+	Action message ............... 8
+	Action move ................. 15
+	Action state_set ............. 2
+	Command east ................. 5
+	Command enter ................ 1
+	Command feed ................. 1
+	Command north ................ 2
+	Command ride ................. 1
+	Command west ................. 6
+	Room Count ................... 9

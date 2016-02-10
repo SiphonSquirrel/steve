@@ -221,10 +221,10 @@ class ConsoleInterface(SteveInterface):
             print ""
             pass
 
-class DevToolDotPrinter:
+class DevToolBaseRoomVisitor:
     def __init__(self, world):
         self.world = world
-    
+        
     def getAllDestinations(self, action):
         if "action" in action:
             if action["action"] == "move":
@@ -241,35 +241,85 @@ class DevToolDotPrinter:
             return retVal
                 
         return []
-    
-    def getDotRepresentation(self):
+        
+    def visitRooms(self):
         visitedRooms = []
         toVisit = [self.world.getStartRoom()]
-        firstRoom = True
 
-        retVal  = "digraph {\n"
         while len(toVisit) > 0:
             room = toVisit.pop()
             visitedRooms.append(room)
-            if firstRoom:
-                firstRoom = False
-                retVal += "  " + room + " [ shape=\"doublecircle\" ]\n"
-            elif not self.world.isRoom(room):
-                retVal += "  " + room + " [ style=\"filled\", fillcolor=\"red\"]\n"
-                
-            for actionId, action in self.world.getActions(room).iteritems():
-                adjRooms = self.getAllDestinations(action)
-                edges = []
-                for adjRoom in adjRooms:
-                    if adjRoom not in edges:
-                        edges.append(adjRoom)
-                        retVal += "  " + room + " -> " + adjRoom + " [ label=\"" + actionId + "\" ]\n"
-                        if adjRoom not in visitedRooms and adjRoom not in toVisit:
-                            toVisit.append(adjRoom)
             
-        retVal += "}\n"
-        return retVal
-        
+            actions = self.world.getActions(room)
+            self.onRoom(room, actions)
+            
+            for actionId, action in actions.iteritems():
+                for adjRoom in self.getAllDestinations(action):
+                    if adjRoom not in visitedRooms and adjRoom not in toVisit:
+                        toVisit.append(adjRoom)
+
+    def onRoom(self, room, actions):
+        pass
+
+class DevToolDotPrinter(DevToolBaseRoomVisitor):
+    def __init__(self, world):
+        DevToolBaseRoomVisitor.__init__(self, world)
+    
+    def getDotRepresentation(self):
+        self.retVal = "digraph {\n"
+        self.retVal += "  " + self.world.getStartRoom() + " [ shape=\"doublecircle\" ]\n"
+        self.visitRooms()
+        self.retVal += "}\n"
+        return self.retVal
+    
+    def onRoom(self, room, actions):
+        if not self.world.isRoom(room):
+            self.retVal += "  " + room + " [ style=\"filled\", fillcolor=\"red\"]\n"
+        for actionId, action in actions.iteritems():
+            edges = []
+            for adjRoom in self.getAllDestinations(action):
+                if adjRoom not in edges:
+                    edges.append(adjRoom)
+                    self.retVal += "  " + room + " -> " + adjRoom + " [ label=\"" + actionId + "\" ]\n"
+
+class DevToolStatistics(DevToolBaseRoomVisitor):
+    def __init__(self, world):
+        self.world = world
+    
+    def getCounts(self):
+        self.counts = { "Room Count" : 0 }
+        self.visitRooms()
+        return self.counts
+
+    def onRoom(self, room, actions):
+        self.counts["Room Count"] += 1
+        for actionId, action in actions.iteritems():
+            cmdKey = "Command " + actionId
+            if cmdKey not in self.counts:
+                self.counts[cmdKey] = 1
+            else:
+                self.counts[cmdKey] += 1
+            self.onAction(action)
+    
+    def onAction(self, action):
+        actionKey = None
+        if "action" in action:
+            actionKey = "Action " + action["action"]
+        elif "actions" in action:
+            actionKey = "Action actions"
+            for subaction in action["actions"]:
+                self.onAction(subaction)
+        elif "choice" in action:
+            actionKey = "Action choice"
+            for subaction in action["choice"]:
+                self.onAction(subaction)
+        else:
+            return
+                
+        if actionKey not in self.counts:
+            self.counts[actionKey] = 1
+        else:
+            self.counts[actionKey] += 1
 
 def main(args=sys.argv):
     args = args[1:]
@@ -292,6 +342,12 @@ def main(args=sys.argv):
     world = JsonWorld(worldName + ".world.json")
     if devMode == "graphviz":
         print DevToolDotPrinter(world).getDotRepresentation()
+    elif devMode == "stats":
+        counts = DevToolStatistics(world).getCounts()
+        for key in sorted(counts):
+            value = str(counts[key])
+            spacer = '.' * (30 - (len(key) + len(value)))
+            print key + " " + spacer + " " + value
     elif devMode == "":
         engine = SteveEngine(world)
         interface = ConsoleInterface()
