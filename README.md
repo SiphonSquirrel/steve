@@ -5,7 +5,7 @@
 Run "steve.py" to play.
 
 If you want to play a non—default world, pass the woridname on the command line
-(ie. "./steve.py zork")
+(ie. `./steve.py zork`)
 
 While in the game, use "!help" or "?" to get command help:
 
@@ -13,8 +13,9 @@ While in the game, use "!help" or "?" to get command help:
 	------------
 	?,!help      - This help text
 	!quit        - Exits the game
-	!save [slot] - Saves the game to the specified slot, default: 0
-	!load [slot] - Loads the game from the specified slot, default: 0
+
+*Note:* State saving can be enabled by passing --enable-save on the command line
+(ie `./steve.py --enable-save`). It is disabled by default
 
 ## World Building
 

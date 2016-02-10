@@ -65,6 +65,8 @@ class SteveEngine:
                             if required[i] != extra[i]:
                                 foundMatch = False
                                 break
+                        if foundMatch:
+                            break
                 if not foundMatch:
                     interface.printDebug("DEBUG: CONDFAIL: Failed to match " + str(extra) + " to any of " + str(required))
                     return False
@@ -238,7 +240,67 @@ class JsonWorld(SteveWorld):
     def isRoom(self, room):
         return room in self.__world["rooms"]
 
-class ConsoleInterface(SteveInterface):
+class TextBasedInterface(SteveInterface):
+
+    INPUT_RESULT_NO_CHANGE = 0
+    INPUT_RESULT_ROOM_CHANGED = 1
+    INPUT_RESULT_QUIT = 2
+    
+    def __init__(self):
+        self.saveEnabled = False
+
+    def showHelp(self):
+        helpText  = "Command Help\n"
+        helpText += "------------\n"
+        helpText += "?,!help      - This help text\n"
+        helpText += "!quit        - Exits the game\n"
+        if self.saveEnabled:
+            helpText += "!save [slot] - Saves the game to the specified slot, default: 0\n"
+            helpText += "!load [slot] - Loads the game from the specified slot, default: 0\n"
+        self.printLines(helpText)
+
+    def handleInput(self, engine, player, input):
+        result = TextBasedInterface.INPUT_RESULT_NO_CHANGE
+        if input.startswith("!"):
+            cmdArr = input[1:].split(" ")
+            if cmdArr[0] == "quit":
+                return TextBasedInterface.INPUT_RESULT_QUIT
+            elif cmdArr[0] == "help":
+                self.showHelp()
+            elif self.saveEnabled and cmdArr[0] == "save":
+                slot = 0
+                if len(cmdArr) > 1:
+                    slot = int(cmdArr[1])
+
+                if slot >= 0 and slot <= 9:
+                    player.save(engine.world, slot)
+                else:
+                    self.printLines("Please specify a slot from 0 to 9")
+            elif self.saveEnabled and cmdArr[0] == "load":
+                slot = 0
+                if len(cmdArr) > 1:
+                    slot = int(cmdArr[1])
+                if slot >= 0 and slot <= 9:
+                    loaded = player.load(engine.world, slot)
+                    if loaded:
+                        self.printLines("Loaded slot " + str(slot))
+                        result = TextBasedInterface.INPUT_RESULT_ROOM_CHANGED
+                    else:
+                        self.printLines("Could not load slot " + str(slot))
+                else:
+                    self.printLines("Please specify a slot from 0 to 9")
+            else:
+                self.printLines("Unknown command: " + cmdArr[0])
+                    
+        elif input == "?":
+            self.showHelp()
+        else:
+            if engine.process(self, player, input):
+                result = TextBasedInterface.INPUT_RESULT_ROOM_CHANGED
+        
+        return result
+
+class ConsoleInterface(TextBasedInterface):
     def __init__(self):
         self.debug = False
     
@@ -249,15 +311,6 @@ class ConsoleInterface(SteveInterface):
         if self.debug:
             print "DEBUG : " + lines
 
-    def showHelp(self):
-        helpText  = "Command Help\n"
-        helpText += "------------\n"
-        helpText += "?,!help      - This help text\n"
-        helpText += "!quit        - Exits the game\n"
-        helpText += "!save [slot] - Saves the game to the specified slot, default: 0\n"
-        helpText += "!load [slot] - Loads the game from the specified slot, default: 0\n"
-        self.printLines(helpText)
-
     def run(self, engine):
         playing = True
         try:
@@ -266,55 +319,23 @@ class ConsoleInterface(SteveInterface):
                 self.printLines("\nUse !help or ? to get command help")
                 
                 player = JsonPlayer(engine.world.getStartRoom())
-                showDescription = True
+                roomChanged = True
                 while not (player.won or player.dead):
                     self.printLines("")
-                    if showDescription:
+                    if roomChanged:
                         desc = engine.world.getDescription(player.room)
                         if desc != "":
                             self.printLines(desc)
                     input = raw_input('> ').strip()
-                    if input.startswith("!"):
-                        showDescription = False
-                        cmdArr = input[1:].split(" ")
-                        if cmdArr[0] == "quit":
-                            playing = False
-                            break
-                        elif cmdArr[0] == "help":
-                            self.showHelp()
-                        elif cmdArr[0] == "save":
-                            slot = 0
-                            if len(cmdArr) > 1:
-                                slot = int(cmdArr[1])
-
-                            if slot >= 0 and slot <= 9:
-                                player.save(engine.world, slot)
-                            else:
-                                self.printLines("Please specify a slot from 0 to 9")
-                        elif cmdArr[0] == "load":
-                            slot = 0
-                            if len(cmdArr) > 1:
-                                slot = int(cmdArr[1])
-                            if slot >= 0 and slot <= 9:
-                                loaded = player.load(engine.world, slot)
-                                if loaded:
-                                    self.printLines("Loaded slot " + str(slot))
-                                    showDescription = True
-                                else:
-                                    self.printLines("Could not load slot " + str(slot))
-                            else:
-                                self.printLines("Please specify a slot from 0 to 9")
-                                
-                    elif input == "?":
-                        showDescription = False
-                        self.showHelp()
-                    else:
-                        showDescription = engine.process(self, player, input)
+                    result = self.handleInput(engine, player, input)
+                    if result == TextBasedInterface.INPUT_RESULT_QUIT:
+                        playing = False
+                        break
+                    roomChanged = result == TextBasedInterface.INPUT_RESULT_ROOM_CHANGED
             
                 if not playing:
                     break
-            
-                if player.won:
+                elif player.won:
                     input = ""
                     while input not in ["y", "n"]:
                         print "You won! Play again? (Y/N)"
@@ -580,18 +601,26 @@ def main(args=sys.argv):
     
     worldName = "default"
     devMode = ""
+    saveEnabled = False
     
     if len(args) > 0:
         if args[0][0] != '-':
             worldName = args[0]
             args = args[1:]
-        if len(args) > 0:
+        while len(args) > 0:
             if args[0] == '--dev':
                 if len(args) > 1:
                     devMode = args[1]
+                    devMode = devMode[2:]
                 else:
                     print "--dev option requires mode argument"
                     return 1
+            elif args[0] == '--enable-save':
+                saveEnabled = True
+                args = args[1:]
+            else:
+                print "Unknown option(s): '" + "' '".join(args) + "'"
+                return 1
     
     world = JsonWorld(worldName + ".world.json")
     if devMode == "graphviz":
@@ -607,8 +636,10 @@ def main(args=sys.argv):
     elif devMode == "":
         engine = SteveEngine(world)
         interface = ConsoleInterface()
+        interface.saveEnabled = saveEnabled
         interface.run(engine)
     return 0
 
 if __name__ == "__main__":
     sys.exit(main())
+ 
