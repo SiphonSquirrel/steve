@@ -122,6 +122,24 @@ This action type unsets player state.
 
 This action (triggered by "eat") removes the player state value for "hungry".
 
+### Action Type: item_take
+
+This action type add items to the player inventory. Count is optional, and
+defaults to 1.
+
+	"atm" : { "action" : "item_take", "item" : "coins", "count" : 7 }
+
+This action (triggered by "atm") adds 7 coins to the player's inventory.
+
+### Action Type: item_drop
+
+This action type removes items to the player inventory. Count is optional, and
+defaults to 1.
+
+	"pay" : { "action" : "item_drop", "item" : "coins", "count" : 5 }
+
+This action (triggered by "pay") drops 5 coins to the player's inventory.
+
 ### Conditions
 
 All action blocks (single and compound actions) also may have conditions that
@@ -185,6 +203,23 @@ For example:
 	}
 
 The above only evaluates to true if the state "eaten" has been set.
+
+### Condition Type: item
+
+This condition checks to ensure the player has (or doesn't have) a certain
+item. It has optional parameters "min" (defaults to 1) and "max" (defaults
+to unlimited).
+
+By setting max to 0, it enforces that the player does not have any of the
+specified items.
+
+For example:
+
+	{
+		"type" : "item",
+		"item" : "key",
+		"max" : 0 
+	}
 
 ### Development Tools
 

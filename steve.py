@@ -3,7 +3,7 @@
 import sys, json
 import os, os.path
 
-shortCommands = {
+defaultShortCommands = {
     "n" : "north",
     "e" : "east",
     "s" : "south",
@@ -16,7 +16,7 @@ class StevePlayer:
         self.dead = False
         self.won = False
         self.state = {}
-        self.inv = []
+        self.inv = {}
         
     def save(self, world, slot):
         pass
@@ -26,22 +26,31 @@ class StevePlayer:
 
 class SteveWorld:
     def getWorldName(self):
-        pass
+        return ""
     
     def getMotd(self):
         return []
+    
+    def getShortCommands(self):
+        return defaultShortCommands
     
     def getStartRoom(self):
         return "start"
     
     def getDescription(self, room):
-        pass
+        return ""
     
     def getActions(self, room):
-        pass
+        return {}
         
     def isRoom(self, room):
-        pass
+        return False
+    
+    def getItem(self, itemId, count):
+        return { "name" : "", "desc" : "" }
+    
+    def isItem(self, itemId):
+        return False
 
 class SteveInterface:
     def printLines(self, lines):
@@ -53,6 +62,7 @@ class SteveInterface:
 class SteveEngine:
     def __init__(self, world):
         self.world = world
+        self.shortCommands = world.getShortCommands()
     
     def evaluateConditions(self, interface, player, conditions, extra):
         for cond in conditions:
@@ -88,8 +98,31 @@ class SteveEngine:
                                 return False
                 elif op != "unset":
                     interface.printDebug("DEBUG: CONDFAIL: var " + var + " was not set")
-                    return False                        
-                    
+                    return False
+            elif cond["type"] == "item":
+                itemId = cond["item"]
+
+                maxCount = None
+                if "max" in cond:
+                    maxCount = cond["max"]
+                
+                if "min" in cond:
+                    minCount = cond["min"]
+                elif maxCount != None:
+                    minCount = min(1, maxCount)
+                else:
+                    minCount = 1
+                        
+                count = 0
+                if itemId in player.inv:
+                    count = player.inv[itemId]["count"]
+                
+                if maxCount != None and count > maxCount:
+                    return False
+                
+                if count < minCount:
+                    return False
+                
         return True
     
     def processAction(self, interface, player, action, extra):
@@ -132,6 +165,24 @@ class SteveEngine:
             elif action["action"] == "state_unset":
                 var = action["var"]
                 player.state.pop(var, None)
+            elif action["action"] == "item_take":
+                itemId = action["item"]
+                count = 1
+                if "count" in action:
+                    count = action["count"]
+                if itemId not in player.inv:
+                    player.inv[itemId] = { "count" : count }
+                else:
+                    player.inv[itemId]["count"] += count
+            elif action["action"] == "item_drop":
+                itemId = action["item"]
+                count = 1
+                if "count" in action:
+                    count = action["count"]
+                if itemId in player.inv:
+                    player.inv[itemId]["count"] -= count
+                    if player.inv[itemId]["count"] <= 0:
+                        player.inv.remove(itemId)
             else:
                 print "WARN: Cannot understand action " + action["action"]
                 return False
@@ -152,8 +203,8 @@ class SteveEngine:
         
         actions = self.world.getActions(player.room)
         
-        if cmd in shortCommands:
-            cmd = shortCommands[cmd]
+        if cmd in self.shortCommands:
+            cmd = self.shortCommands[cmd]
         
         if cmd in actions:
             if self.processAction(interface, player, actions[cmd], extra):
@@ -403,13 +454,13 @@ class DevToolDotPrinter(DevToolBaseRoomVisitor):
     
     def onRoom(self, room, actions):
         if not self.world.isRoom(room):
-            self.retVal += "  " + room + " [ style=\"filled\", fillcolor=\"red\"]\n"
+            self.retVal += "  \"" + room + "\" [ style=\"filled\", fillcolor=\"red\"]\n"
         for actionId, action in actions.iteritems():
             edges = []
             for adjRoom in self.getAllDestinations(action):
                 if adjRoom not in edges:
                     edges.append(adjRoom)
-                    self.retVal += "  " + room + " -> " + adjRoom + " [ label=\"" + actionId + "\" ]\n"
+                    self.retVal += "  \"" + room + "\" -> \"" + adjRoom + "\" [ label=\"" + actionId + "\" ]\n"
 
 class DevToolStatistics(DevToolBaseRoomVisitor):
     def __init__(self, world):
@@ -525,7 +576,7 @@ class DevToolWorldChecker(DevToolBaseRoomVisitor):
     def checkAction(self, room, actionId, action):
         actionType = action["action"]
     
-        if actionType not in ['die', 'win', 'message', 'move', 'state_set', 'state_unset']:
+        if actionType not in ['die', 'win', 'message', 'move', 'state_set', 'state_unset', 'item_take', 'item_drop']:
             self.error(room, actionId, action, "Found unknown action type: " + actionType)
     
         validKeys = ['action', 'conditions']
@@ -544,6 +595,10 @@ class DevToolWorldChecker(DevToolBaseRoomVisitor):
         
         if actionType in ['state_set']:
             validKeys += ['val']
+    
+        if actionType in ['item_take', 'item_drop']:
+            validKeys += ['item', 'count']
+            requiredKeys += ['item']
     
         for key in action.keys():
             if key not in validKeys:
@@ -568,7 +623,7 @@ class DevToolWorldChecker(DevToolBaseRoomVisitor):
             
         conditionType = condition["type"]
         
-        if conditionType not in ["extra", "state"]:
+        if conditionType not in ["extra", "state", "item"]:
             self.error(room, actionId, action, "Found unknown condition type: " + conditionType)
         
         validKeys = ["type"]
@@ -586,7 +641,11 @@ class DevToolWorldChecker(DevToolBaseRoomVisitor):
                 elif condition["op"] not in ["set", "unset"]:
                     validKeys += ["val"]
                     requiredKeys += ["val"]
-    
+
+        if conditionType in ["item"]:
+            validKeys += ["max", "min", "item"]
+            requiredKeys += ["item"]
+
         for key in condition.keys():
             if key not in validKeys:
                 self.warn(room, actionId, action, "Unexpected key '" + key + "' for condition " + conditionType)

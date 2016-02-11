@@ -1,0 +1,370 @@
+{
+	"motd": [
+		"Jak Starfield, Interstellar Gentleman of Leisure",
+		"------------------------------------------------",
+		"Booting...",
+		"...",
+		"Hello Jak Starfield!",
+		"Welcome back, I am TRS-80, your personal assistant."
+	],
+	"rooms" : {
+		"start" : {
+			"desc" : "Syncing with InfoNet... We seem to be in an old asteroid prospector town on Omicron 12. Specifically an adventure-less alley, lets move on. It exits north.",
+			"actions" : {
+				"north" : {
+					"actions" : [
+						{ "action" : "state_set", "var" : "missing-child-1"},
+						{ "action" : "move", "room" : "omicron-12-spaceport" }
+					]
+				}
+			}
+		},
+		"omicron-12-spaceport" : {
+			"desc" : "It appears that we seem to be just outside the spaceport. A drinking establishment appears to be to the north, while our ship lies to the east.",
+			"actions" : {
+				"north" : { "action" : "move", "room" : "omicron-12-rusty-ratchet" },
+				"east" : { "action" : "move", "room" : "omicron-12-ship" }
+			}
+		},
+		"omicron-12-ship" : {
+			"desc" : "Our beloved ship, our starbound gateway, our... you get the point. To take off, simply say 'launch', otherwise 'exit' to go back to the planet.",
+			"actions" : {
+				"exit" : { "action" : "move", "room" : "omicron-12-spaceport" },
+				"launch" : {
+					"choice" : [
+						{
+							"conditions" : [
+								{
+									"type" : "state",
+									"op" : "set",
+									"var" : "missing-child-2"
+								}
+							],
+							"actions" : [
+								{
+									"action" : "message",
+									"message" : "Looks like our best bet for adventure is that old smelter! Oh and the kid might still be there too..."
+								},
+								{
+									"action" : "move",
+									"room" : "omicron-12-smelter-enterance"
+								}
+							]
+						},
+						{
+							"action" : "message",
+							"message" : "We have no where to go, I suggest we find some adventure first!"
+						}
+					]
+				}
+			}
+		},
+		"omicron-12-rusty-ratchet" : {
+			"desc" : "It seems we've wandered into a locale known as the 'Rusty Ratchet'. Seems to cater mostly to gear heads. You can look around, or exit.",
+			"actions" : {
+				"exit" : { "action" : "move", "room" : "omicron-12-spaceport" },
+				"look" : {
+					"conditions" : [
+						{
+							"type" : "extra",
+							"extra" : [["around"],[]]
+						}
+					],
+					"choice" : [
+						{
+							"conditions" : [
+								{
+									"type" : "state",
+									"op" : "set",
+									"var" : "missing-child-1"
+								}
+							],
+							"action" : "move",
+							"room" : "omicron-12-rusty-ratchet-missing-child"
+						},
+						{
+							"action" : "message",
+							"message" : "Seems to be full of regulars. Not much adventure around here..."
+						}
+					]
+				}
+			}
+		},
+		"omicron-12-rusty-ratchet-missing-child" : {
+			"desc" : "The Ratchet seems to be filled with noisy locals, but one in particular seems to be distraught. We can talk or exit out of here.",
+			"actions" : {
+				"exit" : { "action" : "move", "room" : "omicron-12-spaceport" },
+				"talk" : {
+					"actions" : [
+						{ "action" : "message", "message" : "The distraught local, who goes by Tim, explains that his son went missing recently. He was last seen around the old smelter on the outskirts of town. We've agreed to keep an eye out for him, which caused Tim to calm down a little, finish his drink and head back home." },
+						{ "action" : "state_unset", "var" : "missing-child-1" },
+						{ "action" : "state_set", "var" : "missing-child-2" },
+						{ "action" : "move", "room" : "omicron-12-rusty-ratchet" }
+					]
+				}
+			}
+		},
+		"omicron-12-smelter-enterance" : {
+			"desc" : "We've arrived at the enterance of the old smelter just outside of town. The smelter door is to the west, or we jump back in our ship and launch.",
+			"actions" : {
+				"launch" : {
+					"choice" : [
+						{
+							"conditions" : [
+								{
+									"type" : "item",
+									"item" : "omicron-12-artifact"
+								}
+							],
+							"actions" : [
+								{
+									"action" : "message",
+									"message" : "Hmmm... that weird artifact had that note that said 'Dormor Industries' on it. I bet they have more treasure... let's head there! My databanks seem to indicate they were HQ'd on Omicron 2."
+								},
+								{
+									"action" : "move",
+									"room" : "omicron-2-spaceport"
+								}
+							]
+						},
+						{
+							"actions" : [
+								{
+									"action" : "message",
+									"message" : "No wonder this place was abandoned... no adventure to be seen."
+								},
+								{
+									"action" : "move",
+									"room" : "omicron-12-spaceport"
+								}
+							]
+						}
+					]
+				},
+				"west" : { "action" : "move", "room" : "omicron-12-smelter-main-hall" }
+			}
+		},
+	    "omicron-12-smelter-main-hall" : {
+	    	"desc" : "Looks like the main hall of the smelter. There are stairs up to the north, the exit is to the east, and stairs down to the south. A few dim lights can be seen to the west at the end of the hall.",
+			"actions" : {
+				"north" : { "action" : "move", "room" : "omicron-12-smelter-upstairs" },
+				"south" : {
+					"choice" : [
+						{
+							"conditions" : [
+								{
+									"type" : "state",
+									"op" : "set",
+									"var" : "omicron-12-smelter-powered"
+								}
+							],
+							"action" : "move", "room" : "omicron-12-smelter-basement-stairs"
+						},
+						{
+							"action" : "move", "room" : "omicron-12-smelter-basement-stairs-unlit"
+						}
+					]
+				},
+				"east" : { "action" : "move", "room" : "omicron-12-smelter-enterance" },
+				"west" : { "action" : "move", "room" : "omicron-12-smelter-switch-room" }
+			}
+	    },
+		"omicron-12-smelter-switch-room" : {
+			"desc" : "At the end of the hall is an old panel, with a few dim lights. To the right of the panel there seems to be large switch, just begging to be flipped. The enterance is back to the east.",
+			"actions" : {
+				"east" : { "action" : "move", "room" : "omicron-12-smelter-main-hall" },
+				"flip" : {
+					"conditions" : [
+						{
+							"type" : "extra",
+							"extra" : [["switch"], ["large", "switch"]]
+						}
+					],
+					"choice" : [
+						{
+							"conditions" : [
+								{
+									"type" : "state",
+									"op" : "set",
+									"var" : "omicron-12-smelter-powered"
+								}
+							],
+							"actions" : [
+								{
+									"action" : "message",
+									"message" : "You flip the large switch to OFF. The ambient hum of power surging through the building you once heard leaves you standing in silence."
+								},
+								{
+									"action" : "state_unset",
+									"var" : "omicron-12-smelter-powered"
+								}
+							]
+						},
+						{
+
+							"actions" : [
+								{
+									"action" : "message",
+									"message" : "You flip the large switch to ON. Power surges through the building, causing some lights to flicker on, surrounding you in the ambient hum of old powerlines coming back to life."
+								},
+								{
+									"action" : "state_set",
+									"var" : "omicron-12-smelter-powered"
+								}
+							]
+						}
+					]
+				}
+			}
+		},
+		"omicron-12-smelter-basement-stairs" : {
+			"desc" : "You are standing at the top of the stairs. South of you there is enough light from the flaky power to see to the bottom of the stairs, including the jagged holes in a few of the steps. North heads back to the main hall.",
+			"actions" : {
+				"south" : { "action" : "move", "room" : "omicron-12-smelter-basement" },
+				"north" : { "action" : "move", "room" : "omicron-12-smelter-main-hall" }
+			}
+		},
+		"omicron-12-smelter-basement-stairs-unlit" : {
+			"desc" : "You are standing at the top of the stairs. South of you leads down a dark stairwell. Could be dangerous, but what's a little danger when there is adventure to be had?! North heads back to the main hall.",
+			"actions" : {
+				"south" : {
+					"action" : "die",
+					"message" : "Turns out a little danger is a lot of danger. You fall through one of the unseen holes in the stairs, wounding you fatally."
+				},
+				"north" : { "action" : "move", "room" : "omicron-12-smelter-main-hall" }
+			}
+		},
+		"omicron-12-smelter-basement" : {
+			"desc" : "Seems the basement was mostly used as a maintance office. I suggest we look around for treasure. North heads back up the stairs.",
+			"actions" : {
+				"north" : { "action" : "move", "room" : "omicron-12-smelter-basement-stairs" },
+				"look" : {
+					"choice" : [
+						{
+							"conditions" : [
+								{
+									"type" : "item",
+									"item" : "omicron-12-smelter-office-key",
+									"max" : 0
+								}
+							],
+							"actions" : [
+								{
+									"action" : "message",
+									"message" : "Hey! There's a key above the maintance desk... maybe it opens a door to treasure... or adventure... or treasure!"
+								},
+								{
+									"action" : "item_take",
+									"item" : "omicron-12-smelter-office-key"
+								}
+							]
+						},
+						{
+							"action" : "message",
+							"message" : "There doesn't seem to be anything else of value."
+						}
+					]
+				}
+			}
+		},
+		"omicron-12-smelter-upstairs" : {
+			"desc" : "You reach the top of the stairs, where there is a single metal door to the north. The bottom corner of the door looks like its been pulled up and outward, but the hole isn't large enough for an adult to crawl through. The stairs leading back downstairs is to the south.",
+			"actions" : {
+				"south" : { "action" : "move", "room" : "omicron-12-smelter-main-hall" },
+				"north" : {
+					"choice" : [
+						{
+							"conditions" : [
+								{
+									"type" : "item",
+									"item" : "omicron-12-smelter-office-key"
+								}
+							],
+							"actions" : [
+								{
+									"action" : "message",
+									"message" : "The office key turns in the lock, the door opens and you enter the office."
+								},
+								{
+									"action" : "move",
+									"room" : "omicron-12-smelter-office"
+								}
+							]
+						},
+						{
+							"action" : "message",
+							"message" : "You try the door knot, but it seems to be locked. Seems we didn't eat our spinach today, the door won't budge at all!"
+						}
+					]
+				}
+			}
+		},
+		"omicron-12-smelter-office" : {
+			"desc" : "The office looks untouched under a hefty layer of dust, except a small trail of footprints leading behind the desk. The stairs leading downstairs are to the south.",
+			"actions" : {
+				"south" : { "action" : "move", "room" : "omicron-12-smelter-main-hall" },
+				"look" : {
+					"conditions" : [
+						{
+							"type" : "extra",
+							"extra" : [
+								["behind", "the", "desk"],
+								["behind", "desk"],
+								["around"]
+							]
+						}
+					],
+					"choice" : [
+						{
+							"conditions" : [
+								{
+									"type" : "item",
+									"item" : "omicron-12-artifact",
+									"max" : 0 
+								}
+							],
+							"actions" : [
+								{
+									"action" : "message",
+									"message" : "Checking behind the desk you find a child's backpack. Inside the backpack there seems a strange artifact, and a scrap of paper with the name 'Dormor Industries' written on it."
+								},
+								{
+									"action" : "item_take",
+									"item" : "omicron-12-artifact"
+								},
+								{
+									"action" : "item_take",
+									"item" : "omicron-12-artifact-note"
+								}
+							]
+						},
+						{
+							"action" : "message",
+							"message" : "There doesn't seem to be anything else worth taking... its dusty, we should go somewhere else before my circuits get clogged with all this dust!"
+						}
+					]
+				}
+			}
+		},
+		"omicron-2-spaceport" : {
+			"desc" : "It appears that we seem to be just outside the spaceport on Omicron 2. We've safely moored ship to the south.",
+			"actions" : {
+				"south" : { "action" : "move", "room" : "omicron-2-ship" }
+			}
+		},
+		"omicron-2-ship" : {
+			"desc" : "Sure... it is a little rough around the edges. But home is home, and our home is our ship.",
+			"actions" : {
+				"exit" : { "action" : "move", "room" : "omicron-2-spaceport" },
+				"launch" : {
+					"choice" : [
+						{
+							"action" : "message",
+							"message" : "Hey! We haven't found any more treasure here yet. I refuse to power up the ship until we have a lead on some treasure!"
+						}
+					]
+				}
+			}
+		}
+	}
+}
