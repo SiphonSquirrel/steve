@@ -46,7 +46,7 @@ class SteveWorld:
     def isRoom(self, room):
         return False
     
-    def getItem(self, itemId, count):
+    def getItem(self, itemId):
         return { "name" : "", "desc" : "" }
     
     def isItem(self, itemId):
@@ -174,6 +174,10 @@ class SteveEngine:
                     player.inv[itemId] = { "count" : count }
                 else:
                     player.inv[itemId]["count"] += count
+                itemName = itemId
+                if self.world.isItem(itemId):
+                    itemName = self.world.getItem(itemId)["name"]
+                interface.printLines("Got item: " + itemName)
             elif action["action"] == "item_drop":
                 itemId = action["item"]
                 count = 1
@@ -290,6 +294,20 @@ class JsonWorld(SteveWorld):
 
     def isRoom(self, room):
         return room in self.__world["rooms"]
+    
+    def getItem(self, itemId):
+        if "items" not in self.__world:
+            return { "name" : "", "desc" : "" }
+        if itemId not in self.__world["items"]:
+            return { "name" : "", "desc" : "" }
+        return self.__world["items"][itemId]
+        
+    def isItem(self, itemId):
+        if "items" not in self.__world:
+            return False
+        if itemId not in self.__world["items"]:
+            return False
+        return True
 
 class TextBasedInterface(SteveInterface):
 
@@ -305,6 +323,7 @@ class TextBasedInterface(SteveInterface):
         helpText += "------------\n"
         helpText += "?,!help      - This help text\n"
         helpText += "!quit        - Exits the game\n"
+        helpText += "!inv         - Displays your current inventory\n"
         if self.saveEnabled:
             helpText += "!save [slot] - Saves the game to the specified slot, default: 0\n"
             helpText += "!load [slot] - Loads the game from the specified slot, default: 0\n"
@@ -318,6 +337,16 @@ class TextBasedInterface(SteveInterface):
                 return TextBasedInterface.INPUT_RESULT_QUIT
             elif cmdArr[0] == "help":
                 self.showHelp()
+            elif cmdArr[0] == "inv":
+                output = "Inventory:\n"
+                for itemKey in player.inv.keys():
+                    if engine.world.isItem(itemKey):
+                        itemDesc = engine.world.getItem(itemKey)
+                        output += "  * " + itemDesc["name"] + "\n"
+                        output += "      " + itemDesc["desc"] + "\n"
+                    else:
+                        output += "  * " + itemKey + "\n"
+                self.printLines(output)
             elif self.saveEnabled and cmdArr[0] == "save":
                 slot = 0
                 if len(cmdArr) > 1:

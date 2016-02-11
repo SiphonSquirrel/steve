@@ -13,6 +13,7 @@ While in the game, use "!help" or "?" to get command help:
 	------------
 	?,!help      - This help text
 	!quit        - Exits the game
+    !inv         - Displays your current inventory
 
 *Note:* State saving can be enabled by passing --enable-save on the command line
 (ie `./steve.py --enable-save`). It is disabled by default

@@ -7,6 +7,20 @@
 		"Hello Jak Starfield!",
 		"Welcome back, I am TRS-80, your personal assistant."
 	],
+	"items" : {
+		"omicron-12-smelter-office-key" : {
+			"name" : "Omicron 12 Smelter Office Key",
+			"desc" : "Its the key to the main office in the old smelter on Omicron 12."
+		},
+		"omicron-12-artifact" : {
+			"name" : "Strange Geometric Artifact",
+			"desc" : "We found this in a child's backpack on Omicron 12."
+		},
+		"omicron-12-artifact-note" : {
+			"name" : "Dormor Industries Note",
+			"desc" : "This note was found attached to the strange artifact we found, only says 'Dormor Industries'"
+		}
+	},
 	"rooms" : {
 		"start" : {
 			"desc" : "Syncing with InfoNet... We seem to be in an old asteroid prospector town on Omicron 12. Specifically an adventure-less alley, lets move on. It exits north.",
