@@ -252,10 +252,10 @@ For example:
 
 The steve executable provides some dev tools to aid with your dungeoneering.
 
-  * graphviz — Prints the world as a graphviz diagram
-  * stats — Gathers stats about the world, printing various counts
-  * check - Checks the world file for problems
-  * test - Runs steveunit files against a world
+  * `graphviz` — Prints the world as a graphviz diagram
+  * `stats` — Gathers stats about the world, printing various counts
+  * `check` - Checks the world file for problems
+  * `test` - Runs steveunit files against a world
 
 ### Development Tools — Graphviz
 
@@ -359,9 +359,9 @@ Example steveunit file:
 
 The assert types are as follows:
 
-  * assertDead {Fail Message} - Asserts that the player is dead
-  * assertAlive {Fail Message} - Asserts that the player is alive
-  * assertWon {Fail Message} - Asserts that the player has won
-  * assertNotWon {Fail Message} - Asserts that the player has not won
-  * assertInRoom {Room Id} {Fail Message} - Asserts that the player is in a certain room
-  * assertNotInRoom {Room Id} {Fail Message} - Asserts that the player is not in a certain room
+  * `assertDead {Fail Message}` - Asserts that the player is dead
+  * `assertAlive {Fail Message}` - Asserts that the player is alive
+  * `assertWon {Fail Message}` - Asserts that the player has won
+  * `assertNotWon {Fail Message}` - Asserts that the player has not won
+  * `assertInRoom {Room Id} {Fail Message}` - Asserts that the player is in a certain room
+  * `assertNotInRoom {Room Id} {Fail Message}` - Asserts that the player is not in a certain room
