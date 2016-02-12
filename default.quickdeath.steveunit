@@ -1,0 +1,6 @@
+# This is a comment
+# This instructs the player to move north
+n
+w
+# This checks that the player has died, and print the message if they have not.
+?assertDead "Falling down this cliff should have killed you"

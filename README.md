@@ -255,6 +255,7 @@ The steve executable provides some dev tools to aid with your dungeoneering.
   * graphviz — Prints the world as a graphviz diagram
   * stats — Gathers stats about the world, printing various counts
   * check - Checks the world file for problems
+  * test - Runs steveunit files against a world
 
 ### Development Tools — Graphviz
 
@@ -304,3 +305,63 @@ Output when problems are detected:
 Errors are formatted as follows:
 
 	ErrorType RoomId{ActionId} - ProblemMessage
+
+### Development Tools — Test
+
+Usage:
+
+	./steve.py [worldname] --dev check [test1.steveunit] [[test2.steveunit] ...]
+
+The game will play itself and print the input and output of the game, followed
+by a summary. Below is an example of a successful test:
+
+	Running default.quickdeath.steveunit
+	----------------------------------------
+	> You are standing in a field beside a pile of trash. There is a goat path to the north.
+	< n
+	> You find yourself on a goat path. There is an easy, slow path to the east, a dangerous path heading down a cliff side to the west, and a small opening that appears to lead into the mountain to the north.
+	< w
+	> You attempt to make your way down the path, slipping and falling to your death. A goat you are not.
+	----------------------------------------
+	Tests: PASSED
+	Processed 6 lines
+	Passed Tests: 1/1
+
+While a failed test looks like (same test run on a different world file):
+
+	Running default.quickdeath.steveunit
+	----------------------------------------
+	> Syncing with InfoNet... We seem to be in an old asteroid prospector town on Omicron 12. Specifically an adventure-less alley, lets move on. It exits north.
+	< n
+	> It appears that we seem to be just outside the spaceport. A drinking establishment appears to be to the north, while our ship lies to the east.
+	< w
+	> I can't go that way.
+	assertDead failed on line 6 in room omicron-12-spaceport: Falling down this cliff should have killed you
+	----------------------------------------
+	Tests: FAILED
+	Processed 6 lines
+	Passed Tests: 1/1
+
+#### steveunit Files
+
+A steveunit file is processed line by line. A line that starts with a hash (#)
+is a command, while a line that starts with a question mark (?) is an assert
+statement. All other lines are commands feed verbatim into the engine.
+
+Example steveunit file:
+
+	# This is a comment
+	# This instructs the player to move north
+	n
+	w
+	# This checks that the player has died, and print the message if they have not.
+	?assertDead "Falling down this cliff should have killed you"
+
+The assert types are as follows:
+
+  * assertDead {Fail Message} - Asserts that the player is dead
+  * assertAlive {Fail Message} - Asserts that the player is alive
+  * assertWon {Fail Message} - Asserts that the player has won
+  * assertNotWon {Fail Message} - Asserts that the player has not won
+  * assertInRoom {Room Id} {Fail Message} - Asserts that the player is in a certain room
+  * assertNotInRoom {Room Id} {Fail Message} - Asserts that the player is not in a certain room

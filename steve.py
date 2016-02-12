@@ -683,13 +683,92 @@ class DevToolWorldChecker(DevToolBaseRoomVisitor):
         
         if len(requiredKeys) > 0:
             self.error(room, actionId, action, "One or more missing required keys for condition type " + conditionType + ": " + str(requiredKeys))
+
+class DevToolSteveUnit(TextBasedInterface):
+    def __init__(self, engine):
+        self.engine = engine
+    
+    def printLines(self, lines):
+        for line in lines.split("\n"):
+            print "> " + line
+    
+    def run(self, actions):
+        import shlex
+        
+        results = {}
+        player = StevePlayer(self.engine.world.getStartRoom())
+        
+        line = 0
+        asserts = 0
+        passed = 0
+        commands = 0
+        failed = False
+        for action in actions:
+            line += 1
             
+            cmd = action.strip()
+            if cmd == "" or cmd.startswith("#"):
+                continue
+            if cmd.startswith("?"):
+                asserts += 1
+                if not failed:
+                    cmd = shlex.split(cmd[1:])
+                
+                    assertType = cmd[0]
+                    assertArgs = cmd[1:]
+                
+                    if assertType == "assertDead":
+                        failed = not player.dead
+                    elif assertType == "assertAlive":
+                        failed = player.dead
+                    elif assertType == "assertWon":
+                        failed = not player.won
+                    elif assertType == "assertNotWon":
+                        failed = player.won
+                    elif assertType == "assertInRoom":
+                        if len(assertArgs) < 1:
+                            msg = "No room id specified on line " + str(line)
+                            failed = True
+                            continue
+                        else:
+                            roomId = assertArgs[0]
+                            assertArgs = assertArgs[1:]
+                            failed = roomId != player.room
+                    elif assertType == "assertNotInRoom":
+                        if len(assertArgs) < 1:
+                            msg = "No room id specified on line " + str(line)
+                            failed = True
+                            continue
+                        else:
+                            roomId = assertArgs[0]
+                            assertArgs = assertArgs[1:]
+                            failed = roomId == player.room
+
+                    if failed:
+                        print assertType + " failed on line " + str(line) + " in room " + player.room + ": " + " ".join(assertArgs)
+
+                    passed += 1
+            elif not failed:
+                desc = self.engine.world.getDescription(player.room)
+                if desc != "":
+                    self.printLines(desc)
+                commands += 1
+                print "< " + cmd
+                self.handleInput(self.engine, player, cmd)
+        
+        results["lines"] = line
+        results["assertTotal"] = asserts
+        results["assertPassed"] = passed
+        results["passed"] = not failed
+        return results
+
 def main(args=sys.argv):
     args = args[1:]
     
     worldName = "default"
     devMode = ""
     saveEnabled = False
+    unitFiles = None
     
     if len(args) > 0:
         if args[0][0] != '-':
@@ -700,6 +779,13 @@ def main(args=sys.argv):
                 if len(args) > 1:
                     devMode = args[1]
                     args = args[2:]
+                    if devMode == "test":
+                        if len(args) > 0:
+                            unitFiles = args
+                            args = []
+                        else:
+                            print "--dev test requires a unit test file!"
+                            return 1
                 else:
                     print "--dev option requires mode argument"
                     return 1
@@ -721,6 +807,23 @@ def main(args=sys.argv):
             print key + " " + spacer + " " + value
     elif devMode == "check":
         DevToolWorldChecker(world).check()
+    elif devMode == "test":
+        if len(unitFiles) == 0:
+            print "No steveunit files specified!"
+        else:
+            steveUnit = DevToolSteveUnit(SteveEngine(world))
+            for unitFile in unitFiles:
+                print "Running " + unitFile
+                with open(unitFile) as fp:
+                    print "----------------------------------------"
+                    results = steveUnit.run(fp.read().splitlines())
+                    print "----------------------------------------"
+                    if results["passed"]:
+                        print "Tests: PASSED"
+                    else:
+                        print "Tests: FAILED"
+                    print "Processed " + str(results["lines"]) + " lines"
+                    print "Passed Tests: " + str(results["assertPassed"]) + "/" + str(results["assertTotal"])
     elif devMode == "":
         engine = SteveEngine(world)
         interface = ConsoleInterface()
