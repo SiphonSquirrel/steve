@@ -321,7 +321,7 @@
 		"caveEntrance" : {
 			"desc" : "You are at the entrance of the cave. With what little light is peering in between the teeth of te cave mouth, you can see a pile of bones to the west, and a slightly flooded section to the east.",
 			"actions" : {
-				"west" : { "action" : "move", "room" : "caveBoneRoom" },
+				"west" : { "action" : "move", "room" : "caveBoneRoom1" },
 				"east" : { "action" : "move", "room" : "floodedRoom1" },
 				"search" : {
 					"conditions" : [
@@ -340,21 +340,21 @@
 			}
 		},
 		"floodedRoom1" : {
-			"desc" : "You wade into the flooded portion of the cave. The path has gotten so dark, you can only feel the water nipping at your knees. Ahead, you hear the sound of rushing water.",
+			"desc" : "The path has gotten so dark, you can only feel the water nipping at your knees. Ahead, you hear the sound of rushing water.",
 			"actions" : {
-				"west" : { "action" : "move", "room" : "caveBoneRoom" },
+				"west" : { "action" : "move", "room" : "caveEntrance" },
 				"east" : { "action" : "move", "room" : "floodedRoom2" }
 			}
 		},
 		"floodedRoom2" : {
-			"desc" : "You wade further into the flooded portion of the cave. The rushing water sounds louder and you can feel the water level is now waist deep.",
+			"desc" : "The rushing water sounds louder and you can feel the water level is now waist deep.",
 			"actions" : {
 				"west" : { "action" : "move", "room" : "floodedRoom1" },
 				"east" : { "action" : "move", "room" : "floodedRoom3" }
 			}
 		},
 		"floodedRoom3" : {
-			"desc" : "You float even further into the flooded portion of the cave. The water is so deep here that you are having trouble touching the ground. The rushing water is deafening now and immediately east.",
+			"desc" : "The water is so deep here that you are having trouble touching the ground. The rushing water is deafening now and immediately east.",
 			"actions" : {
 				"west" : { "action" : "move", "room" : "floodedRoom2" },
 				"east" : { "action" : "move", "room" : "rapids" }
@@ -367,6 +367,158 @@
 				{ 
 					"action" : "die", 
 					"message" : "Unfortunately you don't know how to swim. Guess you should have thought of that before wading into a flooded tunnel." 
+				}
+			}
+		},
+		"caveBoneRoom1" : {
+			"desc" : "You find more bones and straw as you make your way deeper into the cave.",
+			"actions" : {
+				"west" : { 
+					"choice" : [
+						{
+							"conditions" : [
+								{
+									"type" : "state",
+									"op" : "unset",
+									"var" : "lit_torch"
+								}
+							],
+							"actions" : [
+								{
+									"action" : "message",
+									"message" : "You're a wuss and won't go further into the cave without some light."
+								}
+							]
+						},
+						{
+							"conditions" : [
+								{
+									"type" : "state",
+									"op" : "set",
+									"var" : "lit_torch"
+								}
+							],
+							"actions" : [
+								{
+									"action" : "message",
+									"message" : "You make your way further into the cave, lit torch in hand."
+								},
+								{ "action" : "move", "room" : "caveAlter" }
+							]
+						}
+					]
+				},
+				"east" : { "action" : "move", "room" : "caveEntrance" },
+				"make" : {
+					"conditions" : [
+						{
+							"type" : "extra",
+							"extra" : [
+								["torch"]
+							]
+						}
+					],
+					"choice" : [
+						{
+							"conditions" : [
+								{
+									"type" : "item",
+									"op" : "torch",
+									"max" : 0
+								}
+							],
+							"actions" : [
+								{
+									"action" : "message",
+									"message" : "You fashion a makeshift torch from a leg bone and some straw. Now how to light it?"
+								},
+								{ "action" : "item_take", "item" : "torch", "count" : 1 }
+
+							]
+						},
+						{
+							"conditions" : [
+								{
+									"type" : "item",
+									"op" : "torch",
+									"max" : 1
+								}
+							],
+							"actions" : [
+								{
+									"action" : "message",
+									"message" : "You already have one morbid torch, you don't need more than 1."
+								}
+							]
+						}
+					]
+				},
+				"light" : {
+					"conditions" : [
+						{
+							"type" : "extra",
+							"extra" : [
+								["torch", "with", "gun"]
+							]
+						}
+					],
+					"choice" : [
+						{
+							"conditions" : [
+								{
+									"type" : "item",
+									"op" : "torch",
+									"max" : 1
+								},
+								{
+									"type" : "item",
+									"op" : "gun",
+									"max" : 1
+								}
+							],
+							"actions" : [
+								{
+									"action" : "message",
+									"message" : "You fire a shot with your gun to light the torch. The flame explodes from the torch and lights up the cave."
+								},
+								{
+									"action" : "state_set",
+									"var" : "lit_torch"
+								}
+
+							]
+						},
+						{
+							"conditions" : [
+								{
+									"type" : "item",
+									"op" : "torch",
+									"max" : 0
+								}
+							],
+							"actions" : [
+								{
+									"action" : "message",
+									"message" : "What torch?"
+								}
+							]
+						},
+						{
+							"conditions" : [
+								{
+									"type" : "item",
+									"op" : "gun",
+									"max" : 0
+								}
+							],
+							"actions" : [
+								{
+									"action" : "message",
+									"message" : "What gun?"
+								}
+							]
+						}
+					]
 				}
 			}
 		}
