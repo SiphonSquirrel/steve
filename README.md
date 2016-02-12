@@ -29,6 +29,16 @@ Every world is rooted in a single world json file:
 			"MOTD Line 1",
 			"MOTD Line 2"
 		],
+		"items" : {
+			"key" : {
+				"name" : "House Key",
+				"desc" : "Locks and unlocks my house!"
+			},
+			"handkerchief" : {
+				"name" : "Soiled Handkerchief",
+				"desc" : "Its a handkerchief... used. Bleh."
+			}
+		},
 		"rooms" : {
 			"start" : {
 				"desc" : "quick description of start",
@@ -56,6 +66,22 @@ which could be started with "./steve.py enginetest"
 
 The MOTD (message of the day) is an array of string, where each string is
 printed on its own line when the game begins.
+
+### Items Section
+
+The items section is used to define items the user might find in the world. It
+provides an area to give a human readable name and description to the item.
+The items section is a dictonary where the key is the item id, and the value
+is the item description. For example:
+
+	"key" : {
+		"name" : "House Key",
+		"desc" : "Locks and unlocks my house!"
+	}
+
+This describes the item whose id is "key". The name of the key (when printed
+to the user) is "House Key" and the description is "Locks and unlocks my
+house!"
 
 ### Room Section
 
