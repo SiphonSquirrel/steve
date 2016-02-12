@@ -259,7 +259,7 @@
 								},
 								{
 									"action" : "move",
-									"room" : "caveEnterance"
+									"room" : "caveEntrance"
 								}
 							]
 						},
@@ -318,11 +318,56 @@
 				}
 			}
 		},
-		"caveEnterance" : {
-			"desc" : "You are at the enterance of the cave. With what little light that is available, you can see a pile of bones to the west, and a slightly flooded section to the west.",
+		"caveEntrance" : {
+			"desc" : "You are at the entrance of the cave. With what little light is peering in between the teeth of te cave mouth, you can see a pile of bones to the west, and a slightly flooded section to the east.",
 			"actions" : {
 				"west" : { "action" : "move", "room" : "caveBoneRoom" },
-				"east" : { "action" : "move", "room" : "floodedRoom" }
+				"east" : { "action" : "move", "room" : "floodedRoom1" },
+				"search" : {
+					"conditions" : [
+						{
+							"type" : "extra",
+							"extra" : [
+								["bones"],
+								["bones", "for", "billy"],
+								["bones", "for", "goat"]
+							]
+						}
+					],
+					"action" : "message",
+					"message" : "You search the bones for a sign of Billy, but alas, he must have ventured deeper into the cave"
+				}
+			}
+		},
+		"floodedRoom1" : {
+			"desc" : "You wade into the flooded portion of the cave. The path has gotten so dark, you can only feel the water nipping at your knees. Ahead, you hear the sound of rushing water.",
+			"actions" : {
+				"west" : { "action" : "move", "room" : "caveBoneRoom" },
+				"east" : { "action" : "move", "room" : "floodedRoom2" }
+			}
+		},
+		"floodedRoom2" : {
+			"desc" : "You wade further into the flooded portion of the cave. The rushing water sounds louder and you can feel the water level is now waist deep.",
+			"actions" : {
+				"west" : { "action" : "move", "room" : "floodedRoom1" },
+				"east" : { "action" : "move", "room" : "floodedRoom3" }
+			}
+		},
+		"floodedRoom3" : {
+			"desc" : "You float even further into the flooded portion of the cave. The water is so deep here that you are having trouble touching the ground. The rushing water is deafening now and immediately to your east.",
+			"actions" : {
+				"west" : { "action" : "move", "room" : "floodedRoom2" },
+				"east" : { "action" : "move", "room" : "rapids" }
+			}
+		},
+		"rapids" : {
+			"desc" : "You take one more step forward and suddenly you are whisked up my the current and are now floating down what must be underground rapids. Everything is still pitch black, hope you know how to swim.",
+			"actions" : {
+				"swim" : 
+				{ 
+					"action" : "die", 
+					"message" : "Unfortunately you don't know how to swim. Guess you should have thought of that before wading into a flooded tunnel." 
+				}
 			}
 		}
 	}
