@@ -354,14 +354,14 @@
 			}
 		},
 		"floodedRoom3" : {
-			"desc" : "You float even further into the flooded portion of the cave. The water is so deep here that you are having trouble touching the ground. The rushing water is deafening now and immediately to your east.",
+			"desc" : "You float even further into the flooded portion of the cave. The water is so deep here that you are having trouble touching the ground. The rushing water is deafening now and immediately east.",
 			"actions" : {
 				"west" : { "action" : "move", "room" : "floodedRoom2" },
 				"east" : { "action" : "move", "room" : "rapids" }
 			}
 		},
 		"rapids" : {
-			"desc" : "You take one more step forward and suddenly you are whisked up my the current and are now floating down what must be underground rapids. Everything is still pitch black, hope you know how to swim.",
+			"desc" : "You take one more step forward and suddenly you are whisked up by the current and are now floating down what must be some underground rapids. Everything is still pitch black, hope you know how to swim.",
 			"actions" : {
 				"swim" : 
 				{ 
