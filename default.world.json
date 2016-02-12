@@ -22,7 +22,7 @@
 							"conditions" : [
 								{
 									"type" : "item",
-									"op" : "gun",
+									"item" : "gun",
 									"max" : 0
 								}
 							],
@@ -39,7 +39,7 @@
 							"conditions" : [
 								{
 									"type" : "item",
-									"op" : "gun",
+									"item" : "gun",
 									"max" : 1
 								}
 							],
@@ -323,7 +323,7 @@
 			}
 		},
 		"caveEntrance" : {
-			"desc" : "You are at the entrance of the cave. With what little light is peering in between the teeth of te cave mouth, you can see a pile of bones to the west, and a slightly flooded section to the east.",
+			"desc" : "You are at the entrance of the cave. With what little light is peering in between the teeth of the cave mouth, you can see a pile of bones to the west, and a slightly flooded section to the east.",
 			"actions" : {
 				"west" : { "action" : "move", "room" : "caveBoneRoom1" },
 				"east" : { "action" : "move", "room" : "floodedRoom1" },
@@ -427,7 +427,7 @@
 							"conditions" : [
 								{
 									"type" : "item",
-									"op" : "torch",
+									"item" : "torch",
 									"max" : 0
 								}
 							],
@@ -444,7 +444,7 @@
 							"conditions" : [
 								{
 									"type" : "item",
-									"op" : "torch",
+									"item" : "torch",
 									"max" : 1
 								}
 							],
@@ -471,12 +471,12 @@
 							"conditions" : [
 								{
 									"type" : "item",
-									"op" : "torch",
+									"item" : "torch",
 									"max" : 1
 								},
 								{
 									"type" : "item",
-									"op" : "gun",
+									"item" : "gun",
 									"max" : 1
 								}
 							],
@@ -496,7 +496,7 @@
 							"conditions" : [
 								{
 									"type" : "item",
-									"op" : "torch",
+									"item" : "torch",
 									"max" : 0
 								}
 							],
@@ -511,7 +511,7 @@
 							"conditions" : [
 								{
 									"type" : "item",
-									"op" : "gun",
+									"item" : "gun",
 									"max" : 0
 								}
 							],
