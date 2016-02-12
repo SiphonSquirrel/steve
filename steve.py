@@ -100,7 +100,7 @@ class SteveEngine:
                     interface.printDebug("DEBUG: CONDFAIL: var " + var + " was not set")
                     return False
             elif cond["type"] == "item":
-                itemId = cond["item"]
+                itemId = cond["op"]
 
                 maxCount = None
                 if "max" in cond:
