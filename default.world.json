@@ -183,6 +183,10 @@
 							"action" : "message",
 							"message" : "BLEACH, the trolls taste awful. You have gained +16 trolling power."
 						},
+						{
+							"action" : "state_set",
+							"var" : "troll_power"
+						},		
 						{ "action" : "move", "room" : "bridge" }
 					]
 				}
@@ -403,7 +407,7 @@
 									"action" : "message",
 									"message" : "You make your way further into the cave, lit torch in hand."
 								},
-								{ "action" : "move", "room" : "caveAlter" }
+								{ "action" : "move", "room" : "caveAlterBoss" }
 							]
 						}
 					]
@@ -516,6 +520,64 @@
 									"action" : "message",
 									"message" : "What gun?"
 								}
+							]
+						}
+					]
+				}
+			}
+		},
+		"caveAlterBoss" : {
+			"desc" : "You find Billy the goat tied up above a pentagram painted in blood. The way is blocked by a giant cave troll.",
+			"actions" : {
+				"eat" : {
+					"conditions" : [
+						{
+							"type" : "extra",
+							"extra" : [
+								["troll"]
+							]
+						}
+					],
+					"choice" : [
+						{
+							"conditions" : [
+								{
+									"type" : "state",
+									"op" : "unset",
+									"var" : "boss_eaten"
+								},
+								{
+									"type" : "state",
+									"op" : "unset",
+									"var" : "troll_power"
+								}
+							],
+							"actions" : [
+								{
+									"action" : "message",
+									"message" : "You need at least 16 trolling power to eat the giant cave troll."
+								}
+							]
+						},
+						{
+							"conditions" : [
+								{
+									"type" : "state",
+									"op" : "unset",
+									"var" : "boss_eaten"
+								},
+								{
+									"type" : "state",
+									"op" : "set",
+									"var" : "troll_power"
+								}
+							],
+							"actions" : [
+								{
+									"action" : "message",
+									"message" : "BlEEACH, why do trolls always taste so bad. Thanks to your superior trolling power, you eat the giant cave troll."
+								},
+								{ "action" : "move", "room" : "caveAlter" }
 							]
 						}
 					]
