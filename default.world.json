@@ -5,14 +5,91 @@
 	],
 	"rooms" : {
 		"start" : {
-			"desc" : "You are standing in a field. There is a goat path to the north.",
+			"desc" : "You are standing in a field beside a pile of trash. There is a goat path to the north.",
 			"actions" : {
-				"north" : { "action" : "move", "room" : "goatPath" }
+				"north" : { "action" : "move", "room" : "goatPath" },
+				"search" : {
+					"conditions" : [
+						{
+							"type" : "extra",
+							"extra" : [
+								["trash"]
+							]
+						}
+					],
+					"choice" : [
+						{
+							"conditions" : [
+								{
+									"type" : "item",
+									"op" : "gun",
+									"max" : 0
+								}
+							],
+							"actions" : [
+								{
+									"action" : "message",
+									"message" : "You rummage through the trash and find a loaded hand gun. This might come in handy later."
+								},
+								{ "action" : "item_take", "item" : "gun", "count" : 1 }
+
+							]
+						},
+						{
+							"conditions" : [
+								{
+									"type" : "item",
+									"op" : "gun",
+									"max" : 1
+								}
+							],
+							"actions" : [
+								{
+									"action" : "message",
+									"message" : "You rummage through the trash and find nothing. Your hands are now filthy."
+								}
+							]
+						}
+					]
+				}				
 			}
 		},
 		"goatPath" : {
-			"desc" : "You find yourself on a goat path. There is an easy, slow path to the east, and a dangerous path heading down a cliff side to the west.",
+			"desc" : "You find yourself on a goat path. There is an easy, slow path to the east, a dangerous path heading down a cliff side to the west, and a small opening that appears to lead into the mountain to the north.",
 			"actions" : {
+				"north" : {
+					"choice" : [
+						{
+							"conditions" : [
+								{
+									"type" : "state",
+									"op" : "set",
+									"var" : "have_billy"
+								}
+							],
+							"actions" : [
+								{
+									"action" : "message",
+									"message" : "Billy can't fit through the small opening and gets left behind."
+								},
+								{
+									"action" : "state_unset",
+									"var" : "have_billy"
+								},
+								{ "action" : "move", "room" : "trollBridge" }
+							]
+						},
+						{
+							"actions" : [
+								{
+									"action" : "message",
+									"message" : "You squeeze your way through the opening."
+								},
+								{ "action" : "move", "room" : "trollBridge" }
+							]
+						}
+					]
+				},
 				"east" : { "action" : "move", "room" : "coast1" },
 				"west" : {
 					"choice" : [
@@ -27,7 +104,7 @@
 							"actions" : [
 								{
 									"action" : "message",
-									"message" : "You and Billy carefully make your down the steep cliff path."
+									"message" : "You and Billy carefully make your down the steep cliff path. Wheee!"
 								},
 								{ "action" : "move", "room" : "coast1" }
 							]
@@ -83,6 +160,46 @@
 								}
 							]
 						}
+					]
+				}
+			}
+		},
+		"trollBridge" : {
+			"desc" : "You arrive upon a long bridge where you can't even see the other end. The entrance is guarded by two trolls.",
+			"actions" : {
+				"south" : { "action" : "move", "room" : "goatPath" },
+				"eat" : {
+					"conditions" : [
+						{
+							"type" : "extra",
+							"extra" : [
+								["trolls"],
+								["troll"]
+							]
+						}
+					],
+					"actions" : [
+						{
+							"action" : "message",
+							"message" : "BLEACH, the trolls taste awful. You have gained +16 trolling power."
+						},
+						{ "action" : "move", "room" : "bridge" }
+					]
+				}
+			}
+		},
+		"bridge" : {
+			"desc" : "You arrive upon a long bridge where you can't even see the other end. The entrance to the bridge north is clear.",
+			"actions" : {
+				"south" : { "action" : "move", "room" : "goatPath" },
+				"north" : 
+				{
+					"actions" : [
+						{
+							"action" : "message",
+							"message" : "As you start crossing the bridge, the fog gets thicker and thicker until you cannot see where you are going. As you take the next step, you are falling....... Ouch, that hurt!"
+						},
+						{ "action" : "move", "room" : "outsideCave" }
 					]
 				}
 			}
