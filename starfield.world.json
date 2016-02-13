@@ -19,6 +19,10 @@
 		"omicron-12-artifact-note" : {
 			"name" : "Dormor Industries Note",
 			"desc" : "This note was found attached to the strange artifact we found, only says 'Dormor Industries'"
+		},
+		"crowbar" : {
+			"name" : "Crowbar",
+			"desc" : "Its a handy crowbar! What's not to love?"
 		}
 	},
 	"rooms" : {
@@ -361,9 +365,10 @@
 			}
 		},
 		"omicron-2-spaceport" : {
-			"desc" : "It appears that we seem to be just outside the spaceport on Omicron 2. We've safely moored ship to the south.",
+			"desc" : "It appears that we seem to be just outside the spaceport on Omicron 2. We've safely moored ship to the south. The city lies to the north.",
 			"actions" : {
-				"south" : { "action" : "move", "room" : "omicron-2-ship" }
+				"south" : { "action" : "move", "room" : "omicron-2-ship" },
+				"north" : { "action" : "move", "room" : "omicron-2-intersection-e-6" }
 			}
 		},
 		"omicron-2-ship" : {
@@ -373,9 +378,317 @@
 				"launch" : {
 					"choice" : [
 						{
+							"conditions" : [
+								{
+									"type" : "state",
+									"op" : "set",
+									"var" : "smelters-union-1"
+								}
+							],
+							"actions" : [
+								{
+									"action" : "message",
+									"message" : "Let's get back to Omicron 12, find out more about this Smelter's Union..."
+								},
+								{
+									"action" : "move",
+									"room" : "omicron-12-spaceport"
+								}
+							]
+						},
+						{
 							"action" : "message",
 							"message" : "Hey! We haven't found any more treasure here yet. I refuse to power up the ship until we have a lead on some treasure!"
 						}
+					]
+				}
+			}
+		},
+		"omicron-2-intersection-e-6": {
+			"desc" : "You have arrived an one of the cities many intersections. You are at the corner of Epsilon and Sixth. The spaceport is to the south, while more city is to the west and east.",
+			"actions" : {
+				"south" : { "action" : "move", "room" : "omicron-2-spaceport" },
+				"east" : { "action" : "move", "room" : "omicron-2-intersection-e-9" },
+				"west" : { "action" : "move", "room" : "omicron-2-intersection-e-5" }
+			}
+		},
+		"omicron-2-intersection-e-9": {
+			"desc" : "You have arrived an one of the cities many intersections. You are at the corner of Epsilon and Ninth. More city can been seen both west and north.",
+			"actions" : {
+				"west" : { "action" : "move", "room" : "omicron-2-intersection-e-6" },
+				"north" : { "action" : "move", "room" : "omicron-2-intersection-c-9" }
+			}
+		},
+		"omicron-2-intersection-c-9": {
+			"desc" : "You have arrived an one of the cities many intersections. You are at the corner of Gamma and Ninth. Looks like more city south, north and west!",
+			"actions" : {
+				"south" : { "action" : "move", "room" : "omicron-2-intersection-e-9" },
+				"north" : { "action" : "move", "room" : "omicron-2-intersection-a-9" },
+				"west" : { "action" : "move", "room" : "omicron-2-intersection-c-7" }
+			}
+		},
+		"omicron-2-intersection-a-9": {
+			"desc" : "You have arrived an one of the cities many intersections. You are at the corner of Alpha and Ninth. The Dormor Industries HQ is west, while south heads back into city.",
+			"actions" : {
+				"west" : {
+					"choice" : [
+						{
+							"conditions" : [
+								{
+									"type" : "state",
+									"op" : "set",
+									"var" : "omicron-2-domor-hq-demo-countdown"
+								}
+							],
+							"action" : "message",
+							"message" : "Are you crazy? That building is being deconstructed and we only just made it out alive and I like that part of us... being alive!"
+						},
+						{ "action" : "move", "room" : "omicron-2-domor-hq-enterance" }
+					]
+				},
+				"south" : { "action" : "move", "room" : "omicron-2-intersection-c-9" }
+			}
+		},
+		"omicron-2-intersection-c-7": {
+			"desc" : "You have arrived an one of the cities many intersections. You are at the corner of Gamma and Seventh. City to be explored can be seen both east and west.",
+			"actions" : {
+				"east" : { "action" : "move", "room" : "omicron-2-intersection-c-9" },
+				"west" : { "action" : "move", "room" : "omicron-2-intersection-c-5" }
+			}
+		},
+		"omicron-2-intersection-c-5": {
+			"desc" : "You have arrived an one of the cities many intersections. You are at the corner of Gamma and Fifth. Road leads north, south and east.",
+			"actions" : {
+				"north" : { "action" : "message", "message" : "Seems the road has been blocked off." },
+				"south" : { "action" : "move", "room" : "omicron-2-intersection-d-5" },
+				"east" : { "action" : "move", "room" : "omicron-2-intersection-c-7" }
+			}
+		},
+		"omicron-2-intersection-d-5": {
+			"desc" : "You have arrived an one of the cities many intersections. You are at the corner of Delta and Fifth. A tourist shop is to the east, and more intersections can be seen north, west and south.",
+			"actions" : {
+				"east" : { "action" : "move", "room" : "omicron-2-tourist-shop" },
+				"north" : { "action" : "move", "room" : "omicron-2-intersection-c-5" },
+				"west" : { "action" : "move", "room" : "omicron-2-intersection-d-1" },
+				"south" : { "action" : "move", "room" : "omicron-2-intersection-e-5" }
+			}
+		},
+		"omicron-2-intersection-e-5": {
+			"desc" : "You have arrived an one of the cities many intersections. You are at the corner of Epsilon and Fifth. The city sprawls both north and east.",
+			"actions" : {
+				"north" : { "action" : "move", "room" : "omicron-2-intersection-d-5" },
+				"east" : { "action" : "move", "room" : "omicron-2-intersection-e-6" }
+			}
+		},
+		"omicron-2-intersection-d-1": {
+			"desc" : "You have arrived an one of the cities many intersections. You are at the corner of Delta and First. Roads lead both north and east.",
+			"actions" : {
+				"north" : { "action" : "move", "room" : "omicron-2-intersection-b-1" },
+				"east" : { "action" : "move", "room" : "omicron-2-intersection-d-5" }
+			}
+		},
+		"omicron-2-intersection-b-1": {
+			"desc" : "You have arrived an one of the cities many intersections. You are at the corner of Beta and First. There seems to be an arcade north, an aging mall to the east, and a road heads back south.",
+			"actions" : {
+				"north" : { "action" : "move", "room" : "omicron-2-arcade" },
+				"east" : { "action" : "message", "message" : "Looks like the mall is closed." },
+				"south" : { "action" : "move", "room" : "omicron-2-intersection-d-1" }
+			}
+		},
+		"omicron-2-arcade" : {
+			"desc" : "You've entered an arcade. All your old favorites are here, but with out some creds, there isn't much to do here. You can exit to the south.",
+			"actions" : {
+				"south" : { "action" : "move", "room" : "omicron-2-intersection-b-1" }
+			}
+		},
+		"omicron-2-tourist-shop" : {
+			"desc" : "You've entered a shop for tourists. There are rows and rows of over priced merch, nothing a true adventurer would catch themselves buying. The exit is to the west.",
+			"actions" : {
+				"west" : { "action" : "move", "room" : "omicron-2-intersection-d-5" }
+			}
+		},
+		"omicron-2-domor-hq-enterance" : {
+			"desc" : "You've arrived at the enterance of Dormor Industries HQ. The front has been boarded up, and it says a deconstruction has been scheduled, however there seems to be an alley just north of the enterance. East heads back into the city.",
+			"actions" : {
+				"east" : { "action" : "move", "room" : "omicron-2-intersection-a-9" },
+				"north" : { "action" : "move", "room" : "omicron-2-domor-hq-alley" }
+			}
+		},
+		"omicron-2-domor-hq-alley" : {
+			"desc" : "At the end of the alley there seems to be an unsecured fire escape on the south wall, while the street is back to the west.",
+			"actions" : {
+				"west" : { "action" : "move", "room" : "omicron-2-domor-hq-enterance" },
+				"south" : { "action" : "move", "room" : "omicron-2-domor-hq-fire-escape-1" }
+			}
+		},
+		"omicron-2-domor-hq-fire-escape-1" : {
+			"desc" : "Inside the fire escape, there is a door to the first floor to the south, stairs heading up to the east, and the alley is back to the north.",
+			"actions" : {
+				"north" : { "action" : "move", "room" : "omicron-2-domor-hq-alley" },
+				"south" : { "action" : "message", "message" : "The door seems to be locked up tight." },
+				"east" : { "action" : "move", "room" : "omicron-2-domor-hq-fire-escape-2" }
+			}
+		},
+		"omicron-2-domor-hq-fire-escape-2" : {
+			"desc" : "Inside the fire escape, there is a door to the second floor to the east, stairs heading up to the south, and the stairs heading down to the west.",
+			"actions" : {
+				"east" : { "action" : "move", "room" : "omicron-2-domor-hq-floor-2-hallway" },
+				"west" : { "action" : "move", "room" : "omicron-2-domor-hq-fire-escape-1" },
+				"south" : { "action" : "move", "room" : "omicron-2-domor-hq-fire-escape-3" }
+			}
+		},
+		"omicron-2-domor-hq-floor-2-hallway" : {
+			"desc" : "The second floor is mostly a maintenance floor. It consists of bare unpainted walls with concrete pillars. Broken or badly stained office chairs & desks are stacked up in a pile to the north, while a pile of discarded tools are along the south wall. The door to the stairs is to the west.",
+			"actions" : {
+				"west" : { "action" : "move", "room" : "omicron-2-domor-hq-fire-escape-2" },
+				"north" : { "action" : "message", "message" : "None of this office furniture is really of any interest, and its too heavy to carry back to the ship even if we did want to redecorate!" },
+				"south" : {
+					"choice" : [
+						{
+							"conditions" : [
+								{
+									"type" : "item",
+									"item" : "crowbar",
+									"max" : 0
+								}
+							],
+							"actions" : [
+								{
+									"action" : "message",
+									"message" : "Searching through the tools reveals a crowbar. This could be handy!"
+								},
+								{
+									"action" : "item_take",
+									"item" : "crowbar"
+								}
+							]
+						},
+						{
+							"action" : "message",
+							"message" : "There really isn't anything you'd want to carry around with you. No one sees a level and thinks 'Ohh what an adventure this could lead to!' ..."
+						}
+					]
+				}
+			}
+		},
+		"omicron-2-domor-hq-fire-escape-3" : {
+			"desc" : "Inside the fire escape, there is a door to the third floor to the east, stairs heading up to the west, and the stairs heading down to the north.",
+			"actions" : {
+				"east" : { "action" : "message", "message" : "The door seems to be locked up tight." },
+				"north" : { "action" : "move", "room" : "omicron-2-domor-hq-fire-escape-2" },
+				"west" : { "action" : "move", "room" : "omicron-2-domor-hq-fire-escape-4" }
+			}
+		},
+		"omicron-2-domor-hq-fire-escape-4" : {
+			"desc" : "Inside the fire escape, there is a door to the fourth floor to the south, stairs heading up to the north, and the stairs heading down to the east.",
+			"actions" : {
+				"south" : { "action" : "message", "message" : "The door seems to be locked up tight." },
+				"east" : { "action" : "move", "room" : "omicron-2-domor-hq-fire-escape-3" },
+				"north" : { "action" : "move", "room" : "omicron-2-domor-hq-fire-escape-5" }
+			}
+		},
+		"omicron-2-domor-hq-fire-escape-5" : {
+			"desc" : "Inside the fire escape, there is a door to the fifth floor to the east and the stairs heading down to the south.",
+			"actions" : {
+				"south" : { "action" : "move", "room" : "omicron-2-domor-hq-fire-escape-4" },
+				"east" : {
+					"choice" : [
+						{
+							"conditions" : [
+								{
+									"type" : "state",
+									"op" : "set",
+									"var" : "omicron-2-domor-hq-floor-5-open"
+								}
+							],
+							"action" : "move",
+							"room" : "omicron-2-domor-hq-floor-5-hallway"
+						},
+						{
+							"conditions" : [
+								{
+									"type" : "item",
+									"item" : "crowbar"
+								}
+							],
+							"actions" : [
+								{
+									"action" : "message",
+									"message" : "Using your trusty crowbar, you pry open the fifth floor door."
+								},
+								{
+									"action" : "state_set",
+									"var" : "omicron-2-domor-hq-floor-5-open"
+								},
+								{
+									"action" : "move",
+									"room" : "omicron-2-domor-hq-floor-5-hallway"
+								}
+							]
+						},
+						{
+							"action" : "message",
+							"message" : "This door seems to be jammed. You can just fit your hand through. If only you had something you could use to pry it open."
+						}
+					]
+				}
+			}
+		},
+		"omicron-2-domor-hq-floor-5-hallway" : {
+			"desc" : "You have arrived on the fifth floor, signs show meeting rooms to the north and south, the presidents office to the east, while the stairs are back to the west.",
+			"actions" : {
+				"west" : { "action" : "move", "room" : "omicron-2-domor-hq-fire-escape-5" },
+				"east" : { "action" : "move", "room" : "omicron-2-domor-hq-floor-5-president" },
+				"north" : { "action" : "move", "room" : "omicron-2-domor-hq-floor-5-meeting-a" },
+				"south" : { "action" : "move", "room" : "omicron-2-domor-hq-floor-5-meeting-b" }
+			}
+		},
+		"omicron-2-domor-hq-floor-5-meeting-a" : {
+			"desc" : "This meeting room has been completely stripped completely bare. A few coffee cups are scattered across the floor, but nothing is left in this room. Door back to the hallway is to the south.",
+			"actions" : {
+				"south" : { "action" : "move", "room" : "omicron-2-domor-hq-floor-5-hallway" }
+			}
+		},
+		"omicron-2-domor-hq-floor-5-meeting-b" : {
+			"desc" : "This meeting room has been completely wrecked. Looks like someone was even trying to strip the wires out of the wall but seemingly gave up. Door back to the hallway is to the north.",
+			"actions" : {
+				"north" : { "action" : "move", "room" : "omicron-2-domor-hq-floor-5-hallway" }
+			}
+		},
+		"omicron-2-domor-hq-floor-5-president" : {
+			"desc" : "This must have been the president's office. The north wall has the text 'Smelters Brotherhood Remembers' -Omicron 12, Local 42'. Door back to the hallway is to the west.",
+			"actions" : {
+				"west" : {
+					"actions" : [
+						{
+							"choice" : [
+								{
+									"conditions" : [
+										{
+											"type" : "state",
+											"op" : "unset",
+											"var" : "omicron-2-domor-hq-demo-countdown"
+										}
+									],
+									"actions" : [
+										{
+											"action" : "message",
+											"message" : "As you leave the president's office, contemplating the meaning of the message on the wall, from outside your hear a loud alarm.... WAIT... THAT'S A DECONSTRUCTION WARNING! THEY ARE STARTING NOW... WE HAVE TO GET OUT OF HERE! FAST!"
+										},
+										{
+											"action" : "state_set",
+											"var" : "omicron-2-domor-hq-demo-countdown",
+											"val" : 9
+										},
+										{
+											"action" : "state_set",
+											"var" : "smelters-union-1"
+										}
+									]
+								}
+							]
+						},
+						{ "action" : "move", "room" : "omicron-2-domor-hq-floor-5-hallway" }
 					]
 				}
 			}
