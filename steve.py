@@ -11,8 +11,8 @@ defaultShortCommands = {
 }
 
 class StevePlayer:
-    def __init__(self, room):
-        self.room = room
+    def __init__(self):
+        self.room = ""
         self.dead = False
         self.won = False
         self.state = {}
@@ -42,6 +42,12 @@ class SteveWorld:
     
     def getActions(self, room):
         return {}
+    
+    def getLibraryAction(self, actionId):
+        return {}
+    
+    def getLibraryCondition(self, conditionId):
+        return {}
         
     def isRoom(self, room):
         return False
@@ -63,7 +69,17 @@ class SteveEngine:
     def __init__(self, world):
         self.world = world
         self.shortCommands = world.getShortCommands()
-    
+
+    def initPlayer(self, interface, player):
+        player.room = self.world.getStartRoom()
+        interface.printLines("\n".join(self.world.getMotd()))
+        self.describeRoom(interface, player.room)
+
+    def describeRoom(self, interface, room):
+        desc = self.world.getDescription(room)
+        if desc != "":
+            interface.printLines(desc)
+
     def evaluateConditions(self, interface, player, conditions, extra):
         for cond in conditions:
             if cond["type"] == "extra":
@@ -99,6 +115,7 @@ class SteveEngine:
                 elif op != "unset":
                     interface.printDebug("DEBUG: CONDFAIL: var " + var + " was not set")
                     return False
+            
             elif cond["type"] == "item":
                 itemId = cond["item"]
 
@@ -122,6 +139,18 @@ class SteveEngine:
                 
                 if count < minCount:
                     return False
+            
+            elif cond["type"] == "compound":
+                subConditions = cond["conditions"]
+                if not self.self.evaluateConditions(interface, player,
+                        subConditions, extra):
+                    return False
+            
+            elif cond["type"] == "library":
+                conditionId = cond["ref"]
+                if not self.self.evaluateConditions(interface, player,
+                        world.getLibraryCondition(conditionId), extra):
+                    return False
                 
         return True
     
@@ -139,6 +168,9 @@ class SteveEngine:
             for subaction in action["choice"]:
                 if self.processAction(interface, player, subaction, extra):
                     return True
+        elif "library" in action:
+            subaction = self.world.getLibraryAction(action["library"])
+            return self.processAction(interface, player, subaction, extra)
         elif "action" in action:
             if action["action"] == "move":
                 player.room = action["room"]
@@ -146,6 +178,8 @@ class SteveEngine:
                     interface.printLines("You find yourself in a room the developer was too lazy to create.\n"+
                                          "You have contracted dysentery.")
                     player.dead = True
+                else:
+                    self.describeRoom(interface, player.room)
             elif action["action"] == "die":
                 player.dead = True
                 if "message" in action:
@@ -192,9 +226,8 @@ class SteveEngine:
                 return False
             return True
         else:
-            print "WARN: Cannot find property 'action', 'actions' or 'choice' in room " + player.room
+            print "WARN: Cannot find property 'action', 'actions', 'choice' or 'library' in room " + player.room
                 
-        
         return False
     
     def process(self, interface, player, commandLine):
@@ -221,8 +254,8 @@ class SteveEngine:
         return False
 
 class JsonPlayer(StevePlayer):
-    def __init__(self, room):
-        StevePlayer.__init__(self, room)
+    def __init__(self):
+        StevePlayer.__init__(self)
         
     def save(self, world, slot):
         playerData = {
@@ -291,6 +324,24 @@ class JsonWorld(SteveWorld):
         if not "actions" in self.__world["rooms"][room]:
             return {}
         return self.__world["rooms"][room]["actions"]
+    
+    def getLibraryAction(self, actionId):
+        if not "library" in self.__world:
+            return {}
+        if not "actions" in self.__world["library"]:
+            return {}
+        if not actionId in self.__world["library"]["actions"]:
+            return {}
+        return self.__world["library"]["actions"][actionId]
+    
+    def getLibraryCondition(self, conditionId):
+        if not "library" in self.__world:
+            return {}
+        if not "conditions" in self.__world["library"]:
+            return {}
+        if not conditionId in self.__world["library"]["conditions"]:
+            return {}
+        return self.__world["library"]["conditions"][conditionId]
 
     def isRoom(self, room):
         return room in self.__world["rooms"]
@@ -395,23 +446,19 @@ class ConsoleInterface(TextBasedInterface):
         playing = True
         try:
             while playing:
-                self.printLines("\n".join(engine.world.getMotd()))
                 self.printLines("\nUse !help or ? to get command help")
                 
-                player = JsonPlayer(engine.world.getStartRoom())
+                player = JsonPlayer()
+                engine.initPlayer(self, player)
+                
                 roomChanged = True
                 while not (player.won or player.dead):
                     self.printLines("")
-                    if roomChanged:
-                        desc = engine.world.getDescription(player.room)
-                        if desc != "":
-                            self.printLines(desc)
                     input = raw_input('> ').strip()
                     result = self.handleInput(engine, player, input)
                     if result == TextBasedInterface.INPUT_RESULT_QUIT:
                         playing = False
                         break
-                    roomChanged = result == TextBasedInterface.INPUT_RESULT_ROOM_CHANGED
             
                 if not playing:
                     break
@@ -561,12 +608,22 @@ class DevToolWorldChecker(DevToolBaseRoomVisitor):
         
     def onAction(self, room, actionId, action):
         if "action" in action:
+            if "library" in action:
+                self.warn(room, actionId, action, "Found 'library' and 'action' in same block")
             if "actions" in action:
                 self.warn(room, actionId, action, "Found 'actions' and 'action' in same block")
             if "choice" in action:
                 self.warn(room, actionId, action, "Found 'choice' and 'action' in same block")
             self.checkAction(room, actionId, action)
-            
+        
+        elif "library" in action:
+            if "actions" in action:
+                self.warn(room, actionId, action, "Found 'actions' and 'library' in same block")
+            if "choice" in action:
+                self.warn(room, actionId, action, "Found 'choice' and 'library' in same block")
+            if len(self.world.getLibraryAction(action["library"])) == 0:
+                self.warn(room, actionId, action, "Action Library item " + str(action["library"]) + " does not exist or is empty.")
+        
         elif "actions" in action:
             if "choice" in action:
                 self.warn(room, actionId, action, "Found 'choice' and 'actions' in same block")
@@ -652,7 +709,7 @@ class DevToolWorldChecker(DevToolBaseRoomVisitor):
             
         conditionType = condition["type"]
         
-        if conditionType not in ["extra", "state", "item"]:
+        if conditionType not in ["extra", "state", "item", "library", "compound"]:
             self.error(room, actionId, action, "Found unknown condition type: " + conditionType)
         
         validKeys = ["type"]
@@ -675,6 +732,22 @@ class DevToolWorldChecker(DevToolBaseRoomVisitor):
             validKeys += ["max", "min", "item"]
             requiredKeys += ["item"]
 
+        if conditionType in ["library"]:
+            validKeys += ["ref"]
+            requiredKeys += ["ref"]
+            
+            if "ref" in condition:
+                if len(self.world.getLibraryCondition(condition["ref"])) == 0:
+                    self.warn(room, actionId, action, "Action Condition item " + str(condition["ref"]) + " does not exist or is empty.")
+                
+        if conditionType in ["compound"]:
+            validKeys += ["conditions"]
+            requiredKeys += ["conditions"]
+            
+            if "conditions" in condition:
+                for subCondition in condition["conditions"]:
+                    self.checkCondition(room, actionId, action, subCondition)
+
         for key in condition.keys():
             if key not in validKeys:
                 self.warn(room, actionId, action, "Unexpected key '" + key + "' for condition " + conditionType)
@@ -696,7 +769,8 @@ class DevToolSteveUnit(TextBasedInterface):
         import shlex
         
         results = {}
-        player = StevePlayer(self.engine.world.getStartRoom())
+        player = StevePlayer()
+        self.engine.initPlayer(self, player)
         
         line = 0
         asserts = 0
@@ -749,9 +823,6 @@ class DevToolSteveUnit(TextBasedInterface):
 
                     passed += 1
             elif not failed:
-                desc = self.engine.world.getDescription(player.room)
-                if desc != "":
-                    self.printLines(desc)
                 commands += 1
                 print "< " + cmd
                 self.handleInput(self.engine, player, cmd)

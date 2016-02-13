@@ -39,6 +39,18 @@ Every world is rooted in a single world json file:
 				"desc" : "Its a handkerchief... used. Bleh."
 			}
 		},
+		"library" : {
+			"conditions" : {
+				"hungry" : {
+					...
+				}
+			},
+			"actions" : {
+				"eat_food" : {
+					...
+				}
+			}
+		},
 		"rooms" : {
 			"start" : {
 				"desc" : "quick description of start",
@@ -103,12 +115,64 @@ compound action (triggered by the property "actions" or "choice")
 Single actions execute have a single fixed property "action" which defines the
 type of action. Each action type has its own set of additional properties.
 
+For example, a single move action:
+
+    { "action" : "move", "room" : "super room xyz" }
+
 Compound actions such as "actions" or "choice" consist of an array of
 subactions. These subactions may be single actions or nested compound actions.
 With the "actions" property, each action is executed in order. If one fails to
 execute, then no further actions are executed and the entire block is marked
 as failed. With the "choice" propertiy, each action is executed in order, until
 one succeeds, then no further actions in the list are evaluated.
+
+A 'choice' section may look like:
+
+    {
+		"choice" : [
+			{
+				"conditions" : [
+					{
+						"type" : "state",
+						"op" : "set",
+						"var" : "fed"
+					}
+				],
+				"actions" : [
+					{
+						"action" : "message",
+						"message" : "You aren't feeling that hungry."
+					}
+				]
+			},
+			{
+				"action" : "message",
+				"message" : "Man! Am I starved! I could really eat something!"
+			}
+		]
+	}
+
+While 'actions' looks like this:
+
+    {
+		"actions" : [
+			{
+				"action" : "message",
+				"message" : "You are no longer hungry!"
+			},
+			{
+				"action" : "state_set",
+				"state" : "fed"
+			}	
+		]
+	}
+
+Library actions can also be invoked. If the property "library" is available,
+the action id in the property is used to look up the action to execute.
+
+A library action looks like this:
+
+    { "library" : "eat_food" }
 
 ### Action Type: move
 
@@ -137,7 +201,7 @@ This action type sets player state to true, or a specified value (as denoted by
 the optional parameter "value").
 
 	"eat" : { "action" : "state_set", "var" : "eaten" }
-	
+
 This action (triggered by "eat") sets the player state variable "eaten" to
 True.
 
@@ -246,6 +310,42 @@ For example:
 		"type" : "item",
 		"item" : "key",
 		"max" : 0 
+	}
+
+### Condition Type: compound
+
+This condition groups a set of conditions together. The sub-conditions are in
+an array called "conditions".
+
+For example:
+
+    {
+		"type" : "compound",
+		"conditions" : [
+			{
+				"type" : "item",
+				"item" : "key",
+				"max" : 0 
+			},
+			{
+				"type" : "state",
+				"op" : "set",
+				"var" : "eaten"
+			}	
+		]
+	}
+
+
+### Condition Type: library
+
+This condition evaluates a condition from the world's condition library. The
+condition ID to evaluate is stored in the parameter 'ref'.
+
+For example:
+
+    {
+		"type" : "library",
+		"ref" : "ensure_fed"
 	}
 
 ### Development Tools
