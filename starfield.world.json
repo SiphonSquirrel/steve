@@ -25,6 +25,37 @@
 			"desc" : "Its a handy crowbar! What's not to love?"
 		}
 	},
+	"library" : {
+		"actions" : {
+			"omicron-2-domor-hq-countdown" : {
+				"conditions" : [
+					{
+						"type" : "state",
+						"op" : "set",
+						"var" : "omicron-2-domor-hq-demo-countdown"
+					}
+				],
+				"choice" : [
+					{
+						"conditions" : [
+							{
+								"type" : "state",
+								"op" : "le",
+								"var" : "omicron-2-domor-hq-demo-countdown",
+								"val" : 0
+							}
+						],
+						"action" : "die",
+						"message" : "The desconstruction bots start their deconstruction before you can get out. You are recycled with the rest of the building."
+					},
+					{
+						"action" : "state_dec",
+						"var" : "omicron-2-domor-hq-demo-countdown"
+					}
+				]
+			}
+		}
+	},
 	"rooms" : {
 		"start" : {
 			"desc" : "Syncing with InfoNet... We seem to be in an old asteroid prospector town on Omicron 12. Specifically an adventure-less alley, lets move on. It exits north.",
@@ -516,6 +547,9 @@
 		},
 		"omicron-2-domor-hq-alley" : {
 			"desc" : "At the end of the alley there seems to be an unsecured fire escape on the south wall, while the street is back to the west.",
+			"pre" : {
+				"library" : "omicron-2-domor-hq-countdown"
+			},
 			"actions" : {
 				"west" : { "action" : "move", "room" : "omicron-2-domor-hq-enterance" },
 				"south" : { "action" : "move", "room" : "omicron-2-domor-hq-fire-escape-1" }
@@ -523,6 +557,9 @@
 		},
 		"omicron-2-domor-hq-fire-escape-1" : {
 			"desc" : "Inside the fire escape, there is a door to the first floor to the south, stairs heading up to the east, and the alley is back to the north.",
+			"pre" : {
+				"library" : "omicron-2-domor-hq-countdown"
+			},
 			"actions" : {
 				"north" : { "action" : "move", "room" : "omicron-2-domor-hq-alley" },
 				"south" : { "action" : "message", "message" : "The door seems to be locked up tight." },
@@ -531,6 +568,9 @@
 		},
 		"omicron-2-domor-hq-fire-escape-2" : {
 			"desc" : "Inside the fire escape, there is a door to the second floor to the east, stairs heading up to the south, and the stairs heading down to the west.",
+			"pre" : {
+				"library" : "omicron-2-domor-hq-countdown"
+			},
 			"actions" : {
 				"east" : { "action" : "move", "room" : "omicron-2-domor-hq-floor-2-hallway" },
 				"west" : { "action" : "move", "room" : "omicron-2-domor-hq-fire-escape-1" },
@@ -539,6 +579,9 @@
 		},
 		"omicron-2-domor-hq-floor-2-hallway" : {
 			"desc" : "The second floor is mostly a maintenance floor. It consists of bare unpainted walls with concrete pillars. Broken or badly stained office chairs & desks are stacked up in a pile to the north, while a pile of discarded tools are along the south wall. The door to the stairs is to the west.",
+			"pre" : {
+				"library" : "omicron-2-domor-hq-countdown"
+			},
 			"actions" : {
 				"west" : { "action" : "move", "room" : "omicron-2-domor-hq-fire-escape-2" },
 				"north" : { "action" : "message", "message" : "None of this office furniture is really of any interest, and its too heavy to carry back to the ship even if we did want to redecorate!" },
@@ -573,6 +616,9 @@
 		},
 		"omicron-2-domor-hq-fire-escape-3" : {
 			"desc" : "Inside the fire escape, there is a door to the third floor to the east, stairs heading up to the west, and the stairs heading down to the north.",
+			"pre" : {
+				"library" : "omicron-2-domor-hq-countdown"
+			},
 			"actions" : {
 				"east" : { "action" : "message", "message" : "The door seems to be locked up tight." },
 				"north" : { "action" : "move", "room" : "omicron-2-domor-hq-fire-escape-2" },
@@ -581,6 +627,9 @@
 		},
 		"omicron-2-domor-hq-fire-escape-4" : {
 			"desc" : "Inside the fire escape, there is a door to the fourth floor to the south, stairs heading up to the north, and the stairs heading down to the east.",
+			"pre" : {
+				"library" : "omicron-2-domor-hq-countdown"
+			},
 			"actions" : {
 				"south" : { "action" : "message", "message" : "The door seems to be locked up tight." },
 				"east" : { "action" : "move", "room" : "omicron-2-domor-hq-fire-escape-3" },
@@ -589,6 +638,9 @@
 		},
 		"omicron-2-domor-hq-fire-escape-5" : {
 			"desc" : "Inside the fire escape, there is a door to the fifth floor to the east and the stairs heading down to the south.",
+			"pre" : {
+				"library" : "omicron-2-domor-hq-countdown"
+			},
 			"actions" : {
 				"south" : { "action" : "move", "room" : "omicron-2-domor-hq-fire-escape-4" },
 				"east" : {
@@ -636,6 +688,9 @@
 		},
 		"omicron-2-domor-hq-floor-5-hallway" : {
 			"desc" : "You have arrived on the fifth floor, signs show meeting rooms to the north and south, the presidents office to the east, while the stairs are back to the west.",
+			"pre" : {
+				"library" : "omicron-2-domor-hq-countdown"
+			},
 			"actions" : {
 				"west" : { "action" : "move", "room" : "omicron-2-domor-hq-fire-escape-5" },
 				"east" : { "action" : "move", "room" : "omicron-2-domor-hq-floor-5-president" },
@@ -645,18 +700,27 @@
 		},
 		"omicron-2-domor-hq-floor-5-meeting-a" : {
 			"desc" : "This meeting room has been completely stripped completely bare. A few coffee cups are scattered across the floor, but nothing is left in this room. Door back to the hallway is to the south.",
+			"pre" : {
+				"library" : "omicron-2-domor-hq-countdown"
+			},
 			"actions" : {
 				"south" : { "action" : "move", "room" : "omicron-2-domor-hq-floor-5-hallway" }
 			}
 		},
 		"omicron-2-domor-hq-floor-5-meeting-b" : {
 			"desc" : "This meeting room has been completely wrecked. Looks like someone was even trying to strip the wires out of the wall but seemingly gave up. Door back to the hallway is to the north.",
+			"pre" : {
+				"library" : "omicron-2-domor-hq-countdown"
+			},
 			"actions" : {
 				"north" : { "action" : "move", "room" : "omicron-2-domor-hq-floor-5-hallway" }
 			}
 		},
 		"omicron-2-domor-hq-floor-5-president" : {
 			"desc" : "This must have been the president's office. The north wall has the text 'Smelters Brotherhood Remembers' -Omicron 12, Local 42'. Door back to the hallway is to the west.",
+			"pre" : {
+				"library" : "omicron-2-domor-hq-countdown"
+			},
 			"actions" : {
 				"west" : {
 					"actions" : [

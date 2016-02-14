@@ -213,6 +213,22 @@ This action type unsets player state.
 
 This action (triggered by "eat") removes the player state value for "hungry".
 
+### Action Type: state_inc
+
+This action type increments player state.
+
+	"score" : { "action" : "state_inc", "var" : "points" }
+
+This action (triggered by "score") increases the player state 'points' by 1.
+
+### Action Type: state_dec
+
+This action type decrements player state.
+
+	"score" : { "action" : "state_dec", "var" : "points" }
+
+This action (triggered by "score") decreases the player state 'points' by 1.
+
 ### Action Type: item_take
 
 This action type add items to the player inventory. Count is optional, and
@@ -284,6 +300,12 @@ Available operations are:
 
   * set
   * unset
+  * eq, ==
+  * ne, !=
+  * le, <=
+  * lt, <
+  * ge, >=
+  * gt, >
 
 For example:
   

@@ -42,6 +42,9 @@ class SteveWorld:
     
     def getActions(self, room):
         return {}
+
+    def getRoomActions(self, room):
+        return {}
     
     def getLibraryAction(self, actionId):
         return {}
@@ -73,12 +76,21 @@ class SteveEngine:
     def initPlayer(self, interface, player):
         player.room = self.world.getStartRoom()
         interface.printLines("\n".join(self.world.getMotd()))
-        self.describeRoom(interface, player.room)
+        self.enterRoom(interface, player, player.room)
 
-    def describeRoom(self, interface, room):
-        desc = self.world.getDescription(room)
-        if desc != "":
-            interface.printLines(desc)
+    def enterRoom(self, interface, player, room):
+        roomActions = self.world.getRoomActions(player.room)
+        
+        if "pre" in roomActions:
+            self.processAction(interface, player, roomActions["pre"], [])
+        
+        if not player.dead:
+            desc = self.world.getDescription(room)
+            if desc != "":
+                interface.printLines(desc)
+            
+            if "post" in roomActions:
+                self.processAction(interface, player, roomActions["post"], [])
 
     def evaluateConditions(self, interface, player, conditions, extra):
         for cond in conditions:
@@ -111,6 +123,18 @@ class SteveEngine:
                                 return False
                         elif op == "!=" or op == "ne":
                             if val == player.state[var]:
+                                return False
+                        elif op == "<=" or op == "le":
+                            if val <= player.state[var]:
+                                return False
+                        elif op == "<" or op == "lt":
+                            if val < player.state[var]:
+                                return False
+                        elif op == ">=" or op == "ge":
+                            if val >= player.state[var]:
+                                return False
+                        elif op == ">" or op == "gt":
+                            if val > player.state[var]:
                                 return False
                 elif op != "unset":
                     interface.printDebug("DEBUG: CONDFAIL: var " + var + " was not set")
@@ -179,7 +203,7 @@ class SteveEngine:
                                          "You have contracted dysentery.")
                     player.dead = True
                 else:
-                    self.describeRoom(interface, player.room)
+                    self.enterRoom(interface, player, player.room)
             elif action["action"] == "die":
                 player.dead = True
                 if "message" in action:
@@ -199,6 +223,24 @@ class SteveEngine:
             elif action["action"] == "state_unset":
                 var = action["var"]
                 player.state.pop(var, None)
+            elif action["action"] == "state_inc":
+                var = action["var"]
+                val = 1
+                if "val" in action:
+                    val = action["val"]
+                if var in player.state:
+                    player.state[var] += val
+                else:
+                    player.state[var] = val
+            elif action["action"] == "state_dec":
+                var = action["var"]
+                val = 1
+                if "val" in action:
+                    val = action["val"]
+                if var in player.state:
+                    player.state[var] -= val
+                else:
+                    player.state[var] = -val
             elif action["action"] == "item_take":
                 itemId = action["item"]
                 count = 1
@@ -324,7 +366,19 @@ class JsonWorld(SteveWorld):
         if not "actions" in self.__world["rooms"][room]:
             return {}
         return self.__world["rooms"][room]["actions"]
-    
+
+    def getRoomActions(self, room):
+        retVal = {}
+        
+        if not room in self.__world["rooms"]:
+            return {}
+        
+        if "pre" in self.__world["rooms"][room]:
+            retVal["pre"] = self.__world["rooms"][room]["pre"]
+        if "post" in self.__world["rooms"][room]:
+            retVal["post"] = self.__world["rooms"][room]["post"]
+        return retVal
+        
     def getLibraryAction(self, actionId):
         if not "library" in self.__world:
             return {}
@@ -606,6 +660,11 @@ class DevToolWorldChecker(DevToolBaseRoomVisitor):
         for actionId, action in actions.iteritems():
             self.onAction(room, actionId, action)
         
+        roomActions = self.world.getRoomActions(room)
+        for actionType in ["pre", "post"]:
+            if actionType in roomActions:
+                self.onAction(room, "roomAction-" + actionType, roomActions[actionType])
+                    
     def onAction(self, room, actionId, action):
         if "action" in action:
             if "library" in action:
@@ -621,8 +680,10 @@ class DevToolWorldChecker(DevToolBaseRoomVisitor):
                 self.warn(room, actionId, action, "Found 'actions' and 'library' in same block")
             if "choice" in action:
                 self.warn(room, actionId, action, "Found 'choice' and 'library' in same block")
-            if len(self.world.getLibraryAction(action["library"])) == 0:
+            libAction = self.world.getLibraryAction(action["library"])
+            if len(libAction) == 0:
                 self.warn(room, actionId, action, "Action Library item " + str(action["library"]) + " does not exist or is empty.")
+            self.onAction(room, "actionId", libAction)
         
         elif "actions" in action:
             if "choice" in action:
@@ -662,7 +723,7 @@ class DevToolWorldChecker(DevToolBaseRoomVisitor):
     def checkAction(self, room, actionId, action):
         actionType = action["action"]
     
-        if actionType not in ['die', 'win', 'message', 'move', 'state_set', 'state_unset', 'item_take', 'item_drop']:
+        if actionType not in ['die', 'win', 'message', 'move', 'state_set', 'state_unset', 'state_inc', 'state_dec', 'item_take', 'item_drop']:
             self.error(room, actionId, action, "Found unknown action type: " + actionType)
     
         validKeys = ['action', 'conditions']
@@ -675,11 +736,11 @@ class DevToolWorldChecker(DevToolBaseRoomVisitor):
             validKeys += ['room']
             requiredKeys += ['room']
 
-        if actionType in ['state_set', 'state_unset']:
+        if actionType in ['state_set', 'state_unset', 'state_inc', 'state_dec']:
             validKeys += ['var']
             requiredKeys += ['var']
         
-        if actionType in ['state_set']:
+        if actionType in ['state_set', 'state_inc', 'state_dec']:
             validKeys += ['val']
     
         if actionType in ['item_take', 'item_drop']:
@@ -722,7 +783,8 @@ class DevToolWorldChecker(DevToolBaseRoomVisitor):
             validKeys += ["var", "op"]
             requiredKeys += ["var", "op"]
             if "op" in condition:
-                if condition["op"] not in ["set", "unset", "=", "eq", "!=", "ne"]:
+                if condition["op"] not in ["set", "unset", "=", "eq", "!=", "ne",
+                        "<=", "le", "<", "lt", ">=", "ge", ">", "gt"]:
                     self.error(room, actionId, action, "Unknown op '" + condition["op"] + "' for condition " + conditionType)
                 elif condition["op"] not in ["set", "unset"]:
                     validKeys += ["val"]
