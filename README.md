@@ -60,6 +60,8 @@ Every world is rooted in a single world json file:
 			},
 			"super room xyz" : {
 				"desc" : "description of room xyz",
+				"pre" : { "action" : "message", "message" : "Pre action... in da house!" },
+				"post" : { "action" : "message", "message" : "I'm a post action!" },
 				"actions" : {
 					"west" : {
 						...
@@ -98,7 +100,7 @@ house!"
 ### Room Section
 
 The room section is a dictionary of rooms, where the key is the room id, and
-the value is the room definition. Each room as "desc" property, which is
+the value is the room definition. Each room as `desc` property, which is
 printed when the player enters the room.
 
 The "actions" property of a room defines the actions that can be taken. Some
@@ -107,23 +109,30 @@ actions (such as "north", "west", "east", "south") have built in short commands
 section should use the long form in lower case, as commands are lowercased
 before being evaluated.
 
+A room may also have a `pre` and/or `post` actions. These actions are run
+before and after the description of the room, respectively. If a player dies
+in a `pre` action, the room description will not be printed. Note: `pre` and
+`post` actions work exactly the same as the actions triggered by user input,
+except that they are always run. The can contain choices, library functions,
+conditions, etc.
+
 ### Action Definition
 
-An action maybe a single action (triggered by the property "action’) or a
-compound action (triggered by the property "actions" or "choice")
+An action maybe a single action (triggered by the property `action`) or a
+compound action (triggered by the property `actions` or `choice`)
 
-Single actions execute have a single fixed property "action" which defines the
+Single actions execute have a single fixed property `action` which defines the
 type of action. Each action type has its own set of additional properties.
 
 For example, a single move action:
 
     { "action" : "move", "room" : "super room xyz" }
 
-Compound actions such as "actions" or "choice" consist of an array of
+Compound actions such as `actions` or `choice` consist of an array of
 subactions. These subactions may be single actions or nested compound actions.
-With the "actions" property, each action is executed in order. If one fails to
+With the `actions` property, each action is executed in order. If one fails to
 execute, then no further actions are executed and the entire block is marked
-as failed. With the "choice" propertiy, each action is executed in order, until
+as failed. With the `choice` propertiy, each action is executed in order, until
 one succeeds, then no further actions in the list are evaluated.
 
 A 'choice' section may look like:
@@ -198,12 +207,14 @@ This action (triggered by "east") kills the player with the message
 ### Action Type: state_set
 
 This action type sets player state to true, or a specified value (as denoted by
-the optional parameter "value").
+the optional parameter "val").
 
 	"eat" : { "action" : "state_set", "var" : "eaten" }
 
 This action (triggered by "eat") sets the player state variable "eaten" to
-True.
+True. To set the state to a specific value, add a "val" parameter, for example:
+
+	"eat" : { "action" : "state_set", "var" : "hunger_points", "val": 100 }
 
 ### Action Type: state_unset
 
@@ -220,6 +231,10 @@ This action type increments player state.
 	"score" : { "action" : "state_inc", "var" : "points" }
 
 This action (triggered by "score") increases the player state 'points' by 1.
+Optionally, a `val` may be specified to control the amount the state is
+incremented. For example:
+
+	"score" : { "action" : "state_inc", "var" : "points", "val" : 100 }
 
 ### Action Type: state_dec
 
@@ -228,6 +243,10 @@ This action type decrements player state.
 	"score" : { "action" : "state_dec", "var" : "points" }
 
 This action (triggered by "score") decreases the player state 'points' by 1.
+Optionally, a `val` may be specified to control the amount the state is
+decremented. For example:
+
+	"score" : { "action" : "state_dec", "var" : "points", "val" : 50 }
 
 ### Action Type: item_take
 
@@ -238,6 +257,10 @@ defaults to 1.
 
 This action (triggered by "atm") adds 7 coins to the player's inventory.
 
+	"beg" : { "action" : "item_take", "item" : "coins" }
+
+This action (triggered by "beg") adds 1 coin to the player's inventory.
+
 ### Action Type: item_drop
 
 This action type removes items to the player inventory. Count is optional, and
@@ -246,6 +269,10 @@ defaults to 1.
 	"pay" : { "action" : "item_drop", "item" : "coins", "count" : 5 }
 
 This action (triggered by "pay") drops 5 coins to the player's inventory.
+
+	"tip" : { "action" : "item_drop", "item" : "coins" }
+
+This action (triggered by "tip") drops 1 coin to the player's inventory.
 
 ### Conditions
 
@@ -315,13 +342,29 @@ For example:
 		"var" : "eaten"
 	}
 
-The above only evaluates to true if the state "eaten" has been set.
+The above only evaluates to true if the state "eaten" has been set. For
+operations other than "set" and "unset", a "val" parameter must also be
+specified. For example:
+  
+	{
+		"type" : "state",
+		"op" : "ge",
+		"var" : "coins",
+		"val" : 50
+	}
 
 ### Condition Type: item
 
 This condition checks to ensure the player has (or doesn't have) a certain
 item. It has optional parameters "min" (defaults to 1) and "max" (defaults
-to unlimited).
+to unlimited). For example:
+
+	{
+		"type" : "item",
+		"item" : "key"
+	}
+
+This condition is true when the player has 1 to unlimited keys.
 
 By setting max to 0, it enforces that the player does not have any of the
 specified items.
@@ -333,6 +376,18 @@ For example:
 		"item" : "key",
 		"max" : 0 
 	}
+
+You may also set a minimum value:
+
+	{
+		"type" : "item",
+		"item" : "weights",
+		"min" : 5
+		"max" : 10 
+	}
+
+This condition would evaluate to true if the player was carrying between
+5 and 10 weights.
 
 ### Condition Type: compound
 
