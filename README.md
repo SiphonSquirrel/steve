@@ -97,6 +97,13 @@ This describes the item whose id is "key". The name of the key (when printed
 to the user) is "House Key" and the description is "Locks and unlocks my
 house!"
 
+### Library Section
+
+The library section is where common checks and actions may be placed, which are
+placed under `conditions` and `actions` dictonaries respectively. The key is
+used to reference the condition or action via the `library` directive in a
+room's action or condition definition.
+
 ### Room Section
 
 The room section is a dictionary of rooms, where the key is the room id, and
@@ -118,8 +125,9 @@ conditions, etc.
 
 ### Action Definition
 
-An action maybe a single action (triggered by the property `action`) or a
-compound action (triggered by the property `actions` or `choice`)
+An action maybe a single action (triggered by the property `action`), a
+compound action (triggered by the property `actions` or `choice`), or use a
+common action definition (triggered by the property `library`).
 
 Single actions execute have a single fixed property `action` which defines the
 type of action. Each action type has its own set of additional properties.
@@ -181,7 +189,24 @@ the action id in the property is used to look up the action to execute.
 
 A library action looks like this:
 
-    { "library" : "eat_food" }
+	"library" : {
+		"actions" : {
+			"eat_food" : {
+				"action" : ...
+				...
+			}
+		}
+	},
+	"rooms" : {
+		...
+	    {
+			"eat" : { "library" : "eat_food" }
+		}
+		...
+	}
+
+_Note:_ Referencing a library action is done differently then referencing a
+library condition.
 
 ### Action Type: move
 
@@ -392,7 +417,9 @@ This condition would evaluate to true if the player was carrying between
 ### Condition Type: compound
 
 This condition groups a set of conditions together. The sub-conditions are in
-an array called "conditions".
+an array called "conditions". The compound condition is especially useful when
+defining complex library conditions, as each library condition may only have a
+single root condition.
 
 For example:
 
@@ -420,10 +447,25 @@ condition ID to evaluate is stored in the parameter 'ref'.
 
 For example:
 
-    {
-		"type" : "library",
-		"ref" : "ensure_fed"
+    "library" : {
+		"conditions" : {
+			"ensure_fed" : {
+				"type" : ...
+				...
+			}
+		}
+	},
+	"rooms" : {	
+	    ...
+	    {
+			"type" : "library",
+			"ref" : "ensure_fed"
+		}
+		...
 	}
+
+_Note:_ Referencing a library condition is done differently then referencing a
+library action.
 
 ### Development Tools
 
