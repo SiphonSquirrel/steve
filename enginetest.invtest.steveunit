@@ -1,0 +1,15 @@
+# This steve unit test checks the inventory system.
+w
+?assertItemCount coins 0 "You shouldn't have any coins yet..."
+take
+?assertItemCount coins 1 "You should have exactly 1 coin"
+take
+?assertItemCount coins 2 "You should have exactly 2 coins"
+take
+?assertItemCount coins 3 "You should have exactly 3 coins"
+drop
+?assertItemCount coins 2 "You should have exactly 2 coins"
+drop
+?assertItemCount coins 1 "You should have exactly 1 coins"
+drop
+?assertItemCount coins 0 "You shouldn't have any coins anymore"

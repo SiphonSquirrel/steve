@@ -17,54 +17,54 @@ class StevePlayer:
         self.won = False
         self.state = {}
         self.inv = {}
-        
+
     def save(self, world, slot):
         pass
-    
+
     def load(self, world, slot):
         pass
 
 class SteveWorld:
     def getWorldName(self):
         return ""
-    
+
     def getMotd(self):
         return []
-    
+
     def getShortCommands(self):
         return defaultShortCommands
-    
+
     def getStartRoom(self):
         return "start"
-    
+
     def getDescription(self, room):
         return ""
-    
+
     def getActions(self, room):
         return {}
 
     def getRoomActions(self, room):
         return {}
-    
+
     def getLibraryAction(self, actionId):
         return {}
-    
+
     def getLibraryCondition(self, conditionId):
         return {}
-        
+
     def isRoom(self, room):
         return False
-    
+
     def getItem(self, itemId):
         return { "name" : "", "desc" : "" }
-    
+
     def isItem(self, itemId):
         return False
 
 class SteveInterface:
     def printLines(self, lines):
         pass
-    
+
     def printDebug(self, message):
         pass
 
@@ -80,15 +80,15 @@ class SteveEngine:
 
     def enterRoom(self, interface, player, room):
         roomActions = self.world.getRoomActions(player.room)
-        
+
         if "pre" in roomActions:
             self.processAction(interface, player, roomActions["pre"], [])
-        
+
         if not player.dead:
             desc = self.world.getDescription(room)
             if desc != "":
                 interface.printLines(desc)
-            
+
             if "post" in roomActions:
                 self.processAction(interface, player, roomActions["post"], [])
 
@@ -108,7 +108,7 @@ class SteveEngine:
                 if not foundMatch:
                     interface.printDebug("DEBUG: CONDFAIL: Failed to match " + str(extra) + " to any of " + str(required))
                     return False
-                    
+
             elif cond["type"] == "state":
                 var = cond["var"]
                 op = cond["op"]
@@ -139,50 +139,50 @@ class SteveEngine:
                 elif op != "unset":
                     interface.printDebug("DEBUG: CONDFAIL: var " + var + " was not set")
                     return False
-            
+
             elif cond["type"] == "item":
                 itemId = cond["item"]
 
                 maxCount = None
                 if "max" in cond:
                     maxCount = cond["max"]
-                
+
                 if "min" in cond:
                     minCount = cond["min"]
                 elif maxCount != None:
                     minCount = min(1, maxCount)
                 else:
                     minCount = 1
-                        
+
                 count = 0
                 if itemId in player.inv:
                     count = player.inv[itemId]["count"]
-                
+
                 if maxCount != None and count > maxCount:
                     return False
-                
+
                 if count < minCount:
                     return False
-            
+
             elif cond["type"] == "compound":
                 subConditions = cond["conditions"]
                 if not self.self.evaluateConditions(interface, player,
                         subConditions, extra):
                     return False
-            
+
             elif cond["type"] == "library":
                 conditionId = cond["ref"]
                 if not self.self.evaluateConditions(interface, player,
                         world.getLibraryCondition(conditionId), extra):
                     return False
-                
+
         return True
-    
+
     def processAction(self, interface, player, action, extra):
         if "conditions" in action:
             if not self.evaluateConditions(interface, player, action["conditions"], extra):
                 return False
-        
+
         if "actions" in action:
             for subaction in action["actions"]:
                 if not self.processAction(interface, player, subaction, extra):
@@ -262,16 +262,23 @@ class SteveEngine:
                 if itemId in player.inv:
                     player.inv[itemId]["count"] -= count
                     if player.inv[itemId]["count"] <= 0:
-                        player.inv.remove(itemId)
+                        del player.inv[itemId]
+                    itemName = itemId
+                    if self.world.isItem(itemId):
+                        itemName = self.world.getItem(itemId)["name"]
+                    interface.printLines("Lost item: " + itemName)
+                else:
+                    print "WARN: No item " + itemId + " to drop."
+                    return False
             else:
                 print "WARN: Cannot understand action " + action["action"]
                 return False
             return True
         else:
             print "WARN: Cannot find property 'action', 'actions', 'choice' or 'library' in room " + player.room
-                
+
         return False
-    
+
     def process(self, interface, player, commandLine):
         cmdLine = commandLine.lower().strip()
         cmdArr = cmdLine.split(' ')
@@ -279,26 +286,26 @@ class SteveEngine:
         extra = []
         if len(cmdArr) > 1:
             extra = cmdArr[1:]
-        
+
         actions = self.world.getActions(player.room)
-        
+
         if cmd in self.shortCommands:
             cmd = self.shortCommands[cmd]
-        
+
         if cmd in actions:
             if self.processAction(interface, player, actions[cmd], extra):
                 return True
         elif cmd in ["north", "east", "south", "west"]:
             interface.printLines("I can't go that way.")
             return False
-        
+
         interface.printLines("I don't know how to " + commandLine + ".")
         return False
 
 class JsonPlayer(StevePlayer):
     def __init__(self):
         StevePlayer.__init__(self)
-        
+
     def save(self, world, slot):
         playerData = {
             "room" : self.room,
@@ -307,27 +314,27 @@ class JsonPlayer(StevePlayer):
             "state" : self.state,
             "inv" : self.inv
         }
-        
+
         saveDir = os.path.join(os.path.expanduser("~"), ".steve")
         if not os.path.isdir(saveDir):
             os.makedirs(saveDir)
-        
+
         saveName = os.path.join(saveDir, world.getWorldName() + ".save." + str(slot) + ".json")
         with open(saveName, "w") as fp:
             json.dump(playerData, fp)
-    
+
     def load(self, world, slot):
         saveDir = os.path.join(os.path.expanduser("~"), ".steve")
         if not os.path.isdir(saveDir):
             os.makedirs(saveDir)
-            
+
         saveName = os.path.join(saveDir, world.getWorldName() + ".save." + str(slot) + ".json")
         if not os.path.isfile(saveName):
             return False
-        
+
         with open(saveName, "r") as fp:
             playerData = json.load(fp)
-            
+
             self.room = playerData["room"]
             self.dead = playerData["dead"]
             self.won = playerData["won"]
@@ -341,13 +348,13 @@ class JsonWorld(SteveWorld):
         import os.path
         with open(jsonFile, "r") as fp:
             self.__world = json.load(fp)
-        
+
         name = os.path.basename(jsonFile)
         self.worldName = name[:name.find(".world.json")]
-            
+
     def getWorldName(self):
         return self.worldName
-        
+
     def getMotd(self):
         if "motd" in self.__world:
             return self.__world["motd"]
@@ -369,16 +376,16 @@ class JsonWorld(SteveWorld):
 
     def getRoomActions(self, room):
         retVal = {}
-        
+
         if not room in self.__world["rooms"]:
             return {}
-        
+
         if "pre" in self.__world["rooms"][room]:
             retVal["pre"] = self.__world["rooms"][room]["pre"]
         if "post" in self.__world["rooms"][room]:
             retVal["post"] = self.__world["rooms"][room]["post"]
         return retVal
-        
+
     def getLibraryAction(self, actionId):
         if not "library" in self.__world:
             return {}
@@ -387,7 +394,7 @@ class JsonWorld(SteveWorld):
         if not actionId in self.__world["library"]["actions"]:
             return {}
         return self.__world["library"]["actions"][actionId]
-    
+
     def getLibraryCondition(self, conditionId):
         if not "library" in self.__world:
             return {}
@@ -399,14 +406,14 @@ class JsonWorld(SteveWorld):
 
     def isRoom(self, room):
         return room in self.__world["rooms"]
-    
+
     def getItem(self, itemId):
         if "items" not in self.__world:
             return { "name" : "", "desc" : "" }
         if itemId not in self.__world["items"]:
             return { "name" : "", "desc" : "" }
         return self.__world["items"][itemId]
-        
+
     def isItem(self, itemId):
         if "items" not in self.__world:
             return False
@@ -419,7 +426,7 @@ class TextBasedInterface(SteveInterface):
     INPUT_RESULT_NO_CHANGE = 0
     INPUT_RESULT_ROOM_CHANGED = 1
     INPUT_RESULT_QUIT = 2
-    
+
     def __init__(self):
         self.saveEnabled = False
 
@@ -476,19 +483,19 @@ class TextBasedInterface(SteveInterface):
                     self.printLines("Please specify a slot from 0 to 9")
             else:
                 self.printLines("Unknown command: " + cmdArr[0])
-                    
+
         elif input == "?":
             self.showHelp()
         else:
             if engine.process(self, player, input):
                 result = TextBasedInterface.INPUT_RESULT_ROOM_CHANGED
-        
+
         return result
 
 class ConsoleInterface(TextBasedInterface):
     def __init__(self):
         self.debug = False
-    
+
     def printLines(self, lines):
         print lines
 
@@ -501,10 +508,10 @@ class ConsoleInterface(TextBasedInterface):
         try:
             while playing:
                 self.printLines("\nUse !help or ? to get command help")
-                
+
                 player = JsonPlayer()
                 engine.initPlayer(self, player)
-                
+
                 roomChanged = True
                 while not (player.won or player.dead):
                     self.printLines("")
@@ -513,7 +520,7 @@ class ConsoleInterface(TextBasedInterface):
                     if result == TextBasedInterface.INPUT_RESULT_QUIT:
                         playing = False
                         break
-            
+
                 if not playing:
                     break
                 elif player.won:
@@ -534,7 +541,7 @@ class ConsoleInterface(TextBasedInterface):
 class DevToolBaseRoomVisitor:
     def __init__(self, world):
         self.world = world
-        
+
     def getAllDestinations(self, action):
         if "action" in action:
             if action["action"] == "move":
@@ -549,9 +556,9 @@ class DevToolBaseRoomVisitor:
             for subaction in action["choice"]:
                 retVal += self.getAllDestinations(subaction)
             return retVal
-                
+
         return []
-        
+
     def visitRooms(self):
         visitedRooms = []
         toVisit = [self.world.getStartRoom()]
@@ -559,10 +566,10 @@ class DevToolBaseRoomVisitor:
         while len(toVisit) > 0:
             room = toVisit.pop()
             visitedRooms.append(room)
-            
+
             actions = self.world.getActions(room)
             self.onRoom(room, actions)
-            
+
             for actionId, action in actions.iteritems():
                 for adjRoom in self.getAllDestinations(action):
                     if adjRoom not in visitedRooms and adjRoom not in toVisit:
@@ -574,14 +581,14 @@ class DevToolBaseRoomVisitor:
 class DevToolDotPrinter(DevToolBaseRoomVisitor):
     def __init__(self, world):
         DevToolBaseRoomVisitor.__init__(self, world)
-    
+
     def getDotRepresentation(self):
         self.retVal = "digraph {\n"
         self.retVal += "  " + self.world.getStartRoom() + " [ shape=\"doublecircle\" ]\n"
         self.visitRooms()
         self.retVal += "}\n"
         return self.retVal
-    
+
     def onRoom(self, room, actions):
         if not self.world.isRoom(room):
             self.retVal += "  \"" + room + "\" [ style=\"filled\", fillcolor=\"red\"]\n"
@@ -595,7 +602,7 @@ class DevToolDotPrinter(DevToolBaseRoomVisitor):
 class DevToolStatistics(DevToolBaseRoomVisitor):
     def __init__(self, world):
         self.world = world
-    
+
     def getCounts(self):
         self.counts = { "Room Count" : 0 }
         self.visitRooms()
@@ -610,7 +617,7 @@ class DevToolStatistics(DevToolBaseRoomVisitor):
             else:
                 self.counts[cmdKey] += 1
             self.onAction(action)
-    
+
     def onAction(self, action):
         actionKey = None
         if "action" in action:
@@ -625,17 +632,16 @@ class DevToolStatistics(DevToolBaseRoomVisitor):
                 self.onAction(subaction)
         else:
             return
-                
+
         if actionKey not in self.counts:
             self.counts[actionKey] = 1
         else:
             self.counts[actionKey] += 1
 
-
 class DevToolWorldChecker(DevToolBaseRoomVisitor):
     def __init__(self, world):
         self.world = world
-        
+
     def check(self, printErrors=True):
         self.errors = []
         self.visitRooms()
@@ -645,7 +651,7 @@ class DevToolWorldChecker(DevToolBaseRoomVisitor):
             else:
                 print "OK!"
         return self.errors
-    
+
     def printErrors(self, errors):
         for err in errors:
             print err["type"].upper() + " " + err["room"] + "{" + err["actionId"] + "} - " + err["message"]
@@ -659,12 +665,12 @@ class DevToolWorldChecker(DevToolBaseRoomVisitor):
     def onRoom(self, room, actions):
         for actionId, action in actions.iteritems():
             self.onAction(room, actionId, action)
-        
+
         roomActions = self.world.getRoomActions(room)
         for actionType in ["pre", "post"]:
             if actionType in roomActions:
                 self.onAction(room, "roomAction-" + actionType, roomActions[actionType])
-                    
+
     def onAction(self, room, actionId, action):
         if "action" in action:
             if "library" in action:
@@ -674,7 +680,7 @@ class DevToolWorldChecker(DevToolBaseRoomVisitor):
             if "choice" in action:
                 self.warn(room, actionId, action, "Found 'choice' and 'action' in same block")
             self.checkAction(room, actionId, action)
-        
+
         elif "library" in action:
             if "actions" in action:
                 self.warn(room, actionId, action, "Found 'actions' and 'library' in same block")
@@ -684,7 +690,7 @@ class DevToolWorldChecker(DevToolBaseRoomVisitor):
             if len(libAction) == 0:
                 self.warn(room, actionId, action, "Action Library item " + str(action["library"]) + " does not exist or is empty.")
             self.onAction(room, "actionId", libAction)
-        
+
         elif "actions" in action:
             if "choice" in action:
                 self.warn(room, actionId, action, "Found 'choice' and 'actions' in same block")
@@ -701,7 +707,7 @@ class DevToolWorldChecker(DevToolBaseRoomVisitor):
                         self.checkCondition(room, actionId, action, condition)
             for subaction in action["actions"]:
                 self.onAction(room, actionId, subaction)
-                
+
         elif "choice" in action:
             if len(action["choice"]) == 0:
                 self.warn(room, actionId, action, "Empty 'choice' block")
@@ -717,15 +723,15 @@ class DevToolWorldChecker(DevToolBaseRoomVisitor):
             for subaction in action["choice"]:
                 self.onAction(room, actionId, subaction)
         else:
-            
+
             self.error(room, actionId, action, "Could not find 'action', 'actions' or 'choice' blocks, found: " + str(action.keys()))
 
     def checkAction(self, room, actionId, action):
         actionType = action["action"]
-    
+
         if actionType not in ['die', 'win', 'message', 'move', 'state_set', 'state_unset', 'state_inc', 'state_dec', 'item_take', 'item_drop']:
             self.error(room, actionId, action, "Found unknown action type: " + actionType)
-    
+
         validKeys = ['action', 'conditions']
         requiredKeys = []
         if actionType in ['die', 'win', 'message']:
@@ -739,23 +745,23 @@ class DevToolWorldChecker(DevToolBaseRoomVisitor):
         if actionType in ['state_set', 'state_unset', 'state_inc', 'state_dec']:
             validKeys += ['var']
             requiredKeys += ['var']
-        
+
         if actionType in ['state_set', 'state_inc', 'state_dec']:
             validKeys += ['val']
-    
+
         if actionType in ['item_take', 'item_drop']:
             validKeys += ['item', 'count']
             requiredKeys += ['item']
-    
+
         for key in action.keys():
             if key not in validKeys:
                 self.warn(room, actionId, action, "Unexpected key '" + key + "' for action " + actionType)
             if key in requiredKeys:
                 requiredKeys.remove(key)
-        
+
         if len(requiredKeys) > 0:
             self.error(room, actionId, action, "One or more missing required keys for action " + actionType + ": " + str(requiredKeys))
-        
+
         if "conditions" in action:
             conditions = action["conditions"]
             if len(conditions) == 0:
@@ -767,18 +773,18 @@ class DevToolWorldChecker(DevToolBaseRoomVisitor):
         if "type" not in condition:
             self.error(room, actionId, action, "Type not found for condition!")
             return
-            
+
         conditionType = condition["type"]
-        
+
         if conditionType not in ["extra", "state", "item", "library", "compound"]:
             self.error(room, actionId, action, "Found unknown condition type: " + conditionType)
-        
+
         validKeys = ["type"]
         requiredKeys = []
         if conditionType in ["extra"]:
             validKeys += ["extra"]
             requiredKeys += ["extra"]
-        
+
         if conditionType in ["state"]:
             validKeys += ["var", "op"]
             requiredKeys += ["var", "op"]
@@ -797,15 +803,15 @@ class DevToolWorldChecker(DevToolBaseRoomVisitor):
         if conditionType in ["library"]:
             validKeys += ["ref"]
             requiredKeys += ["ref"]
-            
+
             if "ref" in condition:
                 if len(self.world.getLibraryCondition(condition["ref"])) == 0:
                     self.warn(room, actionId, action, "Action Condition item " + str(condition["ref"]) + " does not exist or is empty.")
-                
+
         if conditionType in ["compound"]:
             validKeys += ["conditions"]
             requiredKeys += ["conditions"]
-            
+
             if "conditions" in condition:
                 for subCondition in condition["conditions"]:
                     self.checkCondition(room, actionId, action, subCondition)
@@ -815,25 +821,25 @@ class DevToolWorldChecker(DevToolBaseRoomVisitor):
                 self.warn(room, actionId, action, "Unexpected key '" + key + "' for condition " + conditionType)
             if key in requiredKeys:
                 requiredKeys.remove(key)
-        
+
         if len(requiredKeys) > 0:
             self.error(room, actionId, action, "One or more missing required keys for condition type " + conditionType + ": " + str(requiredKeys))
 
 class DevToolSteveUnit(TextBasedInterface):
     def __init__(self, engine):
         self.engine = engine
-    
+
     def printLines(self, lines):
         for line in lines.split("\n"):
             print "> " + line
-    
+
     def run(self, actions):
         import shlex
-        
+
         results = {}
         player = StevePlayer()
         self.engine.initPlayer(self, player)
-        
+
         line = 0
         asserts = 0
         passed = 0
@@ -841,7 +847,7 @@ class DevToolSteveUnit(TextBasedInterface):
         failed = False
         for action in actions:
             line += 1
-            
+
             cmd = action.strip()
             if cmd == "" or cmd.startswith("#"):
                 continue
@@ -849,10 +855,12 @@ class DevToolSteveUnit(TextBasedInterface):
                 asserts += 1
                 if not failed:
                     cmd = shlex.split(cmd[1:])
-                
+
                     assertType = cmd[0]
                     assertArgs = cmd[1:]
-                
+
+                    msg = ""
+
                     if assertType == "assertDead":
                         failed = not player.dead
                     elif assertType == "assertAlive":
@@ -879,16 +887,35 @@ class DevToolSteveUnit(TextBasedInterface):
                             roomId = assertArgs[0]
                             assertArgs = assertArgs[1:]
                             failed = roomId == player.room
+                    elif assertType == "assertItemCount":
+                        if len(assertArgs) < 2:
+                            msg = "Item id or count missing on line " + str(line)
+                            failed = True
+                            continue
+                        else:
+                            itemId = assertArgs[0]
+                            itemCount = int(assertArgs[1])
+                            found = 0
+                            if itemId in player.inv:
+                                found = player.inv[itemId]["count"]
+                            if found != itemCount:
+                                failed = True
+                                msg = "Expected count of " + str(itemCount) + ", got " + str(found) + " of " + itemId + ". " + assertArgs[1:]
+                    else:
+                        msg = "Unrecognized assert type: " + assertType
+                        failed = True
+                    if msg == "":
+                        msg = " ".join(assertArgs)
 
                     if failed:
-                        print assertType + " failed on line " + str(line) + " in room " + player.room + ": " + " ".join(assertArgs)
+                        print assertType + " failed on line " + str(line) + " in room " + player.room + ": " + msg
 
                     passed += 1
             elif not failed:
                 commands += 1
                 print "< " + cmd
                 self.handleInput(self.engine, player, cmd)
-        
+
         results["lines"] = line
         results["assertTotal"] = asserts
         results["assertPassed"] = passed
@@ -897,12 +924,12 @@ class DevToolSteveUnit(TextBasedInterface):
 
 def main(args=sys.argv):
     args = args[1:]
-    
+
     worldName = "default"
     devMode = ""
     saveEnabled = False
     unitFiles = None
-    
+
     if len(args) > 0:
         if args[0][0] != '-':
             worldName = args[0]
@@ -928,7 +955,7 @@ def main(args=sys.argv):
             else:
                 print "Unknown option(s): '" + "' '".join(args) + "'"
                 return 1
-    
+
     world = JsonWorld(worldName + ".world.json")
     if devMode == "graphviz":
         print DevToolDotPrinter(world).getDotRepresentation()
@@ -966,4 +993,3 @@ def main(args=sys.argv):
 
 if __name__ == "__main__":
     sys.exit(main())
- 

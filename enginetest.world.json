@@ -1,0 +1,46 @@
+{
+	"motd": [
+    "This world is used for testing the STEVE engine.",
+    "It is unlikely to be very fun, but nothing's stopping you from trying..."
+	],
+	"rooms" : {
+    "start" : {
+      "desc" : "Start room. Inventory testing is west, state testing is east, endings are south, more actions to the north.",
+      "actions" : {
+        "west" : { "action" : "move", "room" : "inv_testing" },
+        "east" : { "action" : "move", "room" : "state_testing" },
+        "north" : { "action" : "move", "room" : "test_room2" },
+        "south" : { "action" : "move", "room" : "ending_testing" }
+      }
+    },
+    "inv_testing" : {
+      "desc" : "Inventory testing room. You can 'take' or 'drop'.",
+      "actions" : {
+        "take" : { "action" : "item_take", "item" : "coins"},
+        "drop" : {
+          "choice" : [
+            {
+              "conditions" : [
+                {
+                  "type" : "item",
+                  "item" : "coins"
+                }
+              ],
+              "action" : "item_drop", "item" : "coins"
+            },
+            { "action" : "message", "message" : "You have no coins to drop." }
+          ]
+        }
+      }
+    },
+    "state_testing" : {
+
+    },
+    "ending_testing" : {
+
+    },
+    "test_room2" : {
+
+    }
+  }
+}
